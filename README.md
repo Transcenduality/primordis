@@ -47,4 +47,4 @@ At this edge, you'll observe:
 1. Install Pygame, Moderngl and Numpy
 'pip install pygame moderngl numpy'
 
-2. Right click and run with Python. (If this doesn't work, use the terminal, and navigate to the Primordis directory with 'cd (file location)' followed by 'python Primordis.py'
+2. Right click and run with Python. If this doesn't work, use the terminal, and navigate to the Primordis directory with 'cd (file location)' followed by 'python Primordis.py'
