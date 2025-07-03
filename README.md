@@ -40,6 +40,8 @@ At this edge, you'll observe:
 
 ![Multicellular Form](multicell.png)
 
+![Caterpillar](caterpillar.png)
+
 ---
 
 ## 🛠 Getting Started
