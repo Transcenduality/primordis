@@ -46,6 +46,8 @@ At this edge, you'll observe:
 
 ![Caterpillar](caterpillar.png)
 
+![Supercells](supercells.png)
+
 ---
 
 ## 🛠 Getting Started
