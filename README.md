@@ -1,6 +1,6 @@
 # What's New?
 
-With v1.1, much larger organisms will now form, with the addition of new sliders, defaulted to finely tuned values, specifically to result in more emergent complexity.
+With v1.2, clusters/colonies will now form under the default parameters set.
 
 # 🧬 Primordis
 
