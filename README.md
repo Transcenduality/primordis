@@ -1,3 +1,7 @@
+# What's New?
+
+With v1.1, much larger organisms will now form, with the addition of new sliders, defaulted to finely tuned values, specifically to result in more emergent complexity.
+
 # 🧬 Primordis
 
 - A digital emergence simulator where structure, motion, and proto-life arise from raw physics.
