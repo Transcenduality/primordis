@@ -1,4 +1,4 @@
-﻿import pygame
+import pygame
 import moderngl
 import numpy as np
 
@@ -6,7 +6,7 @@ import numpy as np
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 1920, 1080
 WORLD_WIDTH, WORLD_HEIGHT = 1080, 720
 NUM_TYPES = 32
-NUM_PARTICLES = 16_000
+NUM_PARTICLES = 32_000
 
 # Binning parameters
 MAX_RADIUS = 64
@@ -100,10 +100,10 @@ def main():
 
     # Create sliders
     sliders = []
-    k_slider         = Slider(50,  50, 200, 20, 0.1, 128.0, 32,  "Interaction Strength")
-    friction_slider  = Slider(50, 100, 200, 20, 0.05, 0.99,  0.75,  "Particle Drift Strength")
+    k_slider         = Slider(50,  50, 200, 20, 0.1, 128.0, 16,  "Interaction Strength")
+    friction_slider  = Slider(50, 100, 200, 20, 0.05, 0.99,  0.8,  "Particle Drift Strength")
     k_div_slider     = Slider(300,  50, 200, 20, 0.0,  64.0,  64,  "Diversity Strength")
-    k_stab_slider    = Slider(300, 100, 200, 20, 0.0,  64.0,  2,   "Stability Strength")
+    k_stab_slider    = Slider(300, 100, 200, 20, 0.0,  64.0,  16,   "Stability Strength")
     k_cluster_slider = Slider(300, 150, 200, 20, 0.0,  64.0,  64,  "Cluster Strength")
     s_min_slider     = Slider(550,  50, 200, 20, 1,    MAX_BIN_PARTICLES, 256, "Cluster Size Min")
     t_min_slider     = Slider(550, 100, 200, 20, 1,    NUM_TYPES,         32,  "Distinct Types Min")
