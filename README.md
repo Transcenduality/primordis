@@ -1,6 +1,6 @@
 # What's New?
 
-With v1.2.1, a refined parameters set results in larger organisms (similar to the previous colonies), but which are also able to form more coherent structure.
+With v1.2.2, the particle count has been slightly reduced to 24,000 to address performance issues.
 
 # 🧬 Primordis
 
