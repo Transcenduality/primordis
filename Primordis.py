@@ -98,22 +98,22 @@ def main():
     button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
     button_font  = pygame.font.Font(None, 24)
 
-    # Create sliders
+    # Create sliders with new default values
     sliders = []
-    k_slider         = Slider(50,  50, 200, 20, 0.1, 128.0, 16,  "Interaction Strength")
-    friction_slider  = Slider(50, 100, 200, 20, 0.05, 0.99,  0.8,  "Particle Drift Strength")
-    k_div_slider     = Slider(300,  50, 200, 20, 0.0,  64.0,  64,  "Diversity Strength")
-    k_stab_slider    = Slider(300, 100, 200, 20, 0.0,  64.0,  16,   "Stability Strength")
-    k_cluster_slider = Slider(300, 150, 200, 20, 0.0,  64.0,  64,  "Cluster Strength")
-    s_min_slider     = Slider(550,  50, 200, 20, 1,    MAX_BIN_PARTICLES, 256, "Cluster Size Min")
-    t_min_slider     = Slider(550, 100, 200, 20, 1,    NUM_TYPES,         32,  "Distinct Types Min")
+    k_slider         = Slider(50,   50, 200, 20, 0.1, 128.0, 96, "Interaction Strength")
+    friction_slider  = Slider(50,  100, 200, 20, 0.05, 0.99,   0.25, "Particle Drift Strength")
+    k_div_slider     = Slider(300,  50, 200, 20, 0.0,  64.0,  64.0,  "Diversity Strength")
+    k_stab_slider    = Slider(300, 100, 200, 20, 0.0,  64.0,   2, "Stability Strength")
+    k_cluster_slider = Slider(300, 150, 200, 20, 0.0,  64.0,  64.0,  "Cluster Strength")
+    s_min_slider     = Slider(550,  50, 200, 20, 1,   MAX_BIN_PARTICLES, 256.0, "Cluster Size Min")
+    t_min_slider     = Slider(550, 100, 200, 20, 1,   NUM_TYPES,        32.0,  "Distinct Types Min")
 
-    alpha1_slider    = Slider(800,  50, 200, 20, 0.5,  5.0,   2.5,  "α1 (multi small-scale)")
-    alpha2_slider    = Slider(1050, 50, 200, 20, 0.5,  5.0,   5,    "α2 (multi mid-scale)")
-    alpha3_slider    = Slider(800, 150, 200, 20, 0.5, 10.0,  10,   "α3 (multi large-scale)")
-    k1_slider        = Slider(800, 100, 200, 20, 0.0, 10.0,  2.5,  "K1 (multi small-scale)")
-    k2_slider        = Slider(1050,100,200, 20, 0.0, 10.0,  5,    "K2 (multi mid-scale)")
-    k3_slider        = Slider(1050,150,200, 20, 0.0, 10.0,  10,   "K3 (multi large-scale)")
+    alpha1_slider    = Slider(800,   50, 200, 20, 0.5,  5.0,  2.5,  "α1 (multi small-scale)")
+    alpha2_slider    = Slider(1050,  50, 200, 20, 0.5,  5.0,  5.0,  "α2 (multi mid-scale)")
+    alpha3_slider    = Slider(800,  150, 200, 20, 0.5, 10.0, 10.0,  "α3 (multi large-scale)")
+    k1_slider        = Slider(800,  100, 200, 20, 0.0, 10.0,  2.5,  "K1 (multi small-scale)")
+    k2_slider        = Slider(1050, 100, 200, 20, 0.0, 10.0,  5.0,  "K2 (multi mid-scale)")
+    k3_slider        = Slider(1050, 150, 200, 20, 0.0, 10.0, 10.0,  "K3 (multi large-scale)")
 
     sliders.extend([
         k_slider, friction_slider, k_div_slider, k_stab_slider, k_cluster_slider,
