@@ -28,7 +28,7 @@ They **emerge**, evolve, and stabilize on their own.
 
 ## 🔥 The Edge of Complexity
 
-> **K = 32**, **Friction = 0.8**, **Particle Types = 32**, **Max Radius = 64**  
+> **K = 96**, **Particle Drift Strength = 0.25**, **Particle Types = 32**, **Max Radius = 64**  
 > Known as the **Primordis Edge** - the zone where the most **sophisticated emergent structures** arise.
 
 At this edge, you'll observe:
