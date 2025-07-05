@@ -48,6 +48,8 @@ At this edge, you'll observe:
 
 ![Supercells](supercells.png)
 
+![Macro-Organism](macroorganism.png)
+
 ---
 
 ## 🛠 Getting Started
