@@ -38,17 +38,15 @@ At this edge, you'll observe:
 
 ---
 
-## 📷 Screenshots
+## 📷 Screenshots (More can be found in the Atlas)
 
-![Swimmer](swimmer.png)
+![Swimmer](Atlas/swimmer.png)
 
-![Multicellular Form](multicell.png)
+![Multicellular Form](Atlas/multicell.png)
 
-![Caterpillar](caterpillar.png)
+![Caterpillar](Atlas/caterpillar.png)
 
-![Supercells](supercells.png)
-
-![Macro-Organism](macroorganism.png)
+![Macro-Organism](Atlas/macroorganism.png)
 
 ---
 
