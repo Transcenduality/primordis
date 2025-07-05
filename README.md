@@ -1,6 +1,6 @@
 # What's New?
 
-With v1.2, clusters/colonies will now form under the default parameters set.
+With v1.2.1, a refined parameters set results in larger organisms (similar to the previous colonies), but which are also able to form more coherent structure.
 
 # 🧬 Primordis
 
