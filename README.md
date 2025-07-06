@@ -1,6 +1,6 @@
 # What's New?
 
-With v1.2.2, the particle count has been slightly reduced to 24,000 to address performance issues.
+With v1.2.3, the default parameters set has been fine tuned via gradient descent.
 
 # 🧬 Primordis
 
@@ -28,7 +28,7 @@ They **emerge**, evolve, and stabilize on their own.
 
 ## 🔥 The Edge of Complexity
 
-> **K = 96**, **Particle Drift Strength = 0.25**, **Particle Types = 32**, **Max Radius = 64**  
+> **K = 100**, **Friction = 0.41, **Particle Types = 32**, **Max Radius = 64**  
 > Known as the **Primordis Edge** - the zone where the most **sophisticated emergent structures** arise.
 
 At this edge, you'll observe:
@@ -38,15 +38,11 @@ At this edge, you'll observe:
 
 ---
 
-## 📷 Screenshots (More can be found in the Atlas)
+## 📷 Screenshots
 
-![Swimmer](Atlas/swimmer.png)
+![Swimmer](swimmer.png)
 
-![Multicellular Form](Atlas/multicell.png)
-
-![Caterpillar](Atlas/caterpillar.png)
-
-![Macro-Organism](Atlas/macroorganism.png)
+![Multicellular Form](multicell.png)
 
 ---
 
@@ -55,4 +51,4 @@ At this edge, you'll observe:
 1. Install Pygame, Moderngl and Numpy
 'pip install pygame moderngl numpy'
 
-2. Right click and run with Python. If this doesn't work, use the terminal, and navigate to the Primordis directory with 'cd (file location)' followed by 'python Primordis.py'
+2. Right click and run with Python. (If this doesn't work, use the terminal, and navigate to the Primordis directory with 'cd (file location)' followed by 'python Primordis.py'
