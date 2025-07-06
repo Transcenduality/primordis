@@ -40,9 +40,13 @@ At this edge, you'll observe:
 
 ## 📷 Screenshots
 
-![Swimmer](swimmer.png)
+![Swimmer](Atlas/swimmer.png)
 
-![Multicellular Form](multicell.png)
+![Multicellular Form](Atlas/multicell.png)
+
+![Caterpillar](Atlas/caterpillar.png)
+
+![Macro Organism](Atlas/macroorganism.png)
 
 ---
 
