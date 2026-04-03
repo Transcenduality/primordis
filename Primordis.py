@@ -5,7 +5,7 @@ import numpy as np
 # Display and world dimensions
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 1080, 720
 WORLD_WIDTH, WORLD_HEIGHT = 768, 480
-NUM_TYPES = 32        # fewer types = clearer roles (membrane, core, linker, etc.)
+NUM_TYPES = 48       # fewer types = clearer roles (membrane, core, linker, etc.)
 NUM_PARTICLES = 16_000
 
 # Binning parameters
@@ -177,7 +177,7 @@ def main():
     sliders = []
     k_slider         = Slider(  50,  50, 200, 20,   0.1, 128.0, 8,  "Force Strength")
     friction_slider  = Slider(  50, 100, 200, 20,  0.01,  0.99,  0.99, "Friction")
-    repel_slider     = Slider(  50, 150, 200, 20,   1.0,  24.0,  24,  "Repulsion Hardness")
+    repel_slider     = Slider(  50, 150, 200, 20,   1.0,  16.0,  16.0,  "Repulsion Hardness")
     k_field_slider   = Slider(  50, 200, 200, 20,   0.0,  32.0,  4.0,  "Field Strength")
     blur_slider      = Slider( 300,  50, 200, 20,   1,    12,    4,    "Field Range")
     homeo_slider     = Slider( 300, 100, 200, 20,   0.0,  32.0,  2.0,  "Homeostasis Strength")
@@ -232,7 +232,7 @@ def main():
         gl_Position = vec4((in_pos.x / {WORLD_WIDTH}.0) * 2.0 - 1.0,
                            (in_pos.y / {WORLD_HEIGHT}.0) * 2.0 - 1.0,
                            0.0, 1.0);
-        gl_PointSize = 6.0;
+        gl_PointSize = 10.0;
     }}
     """
     fragment_shader = """
@@ -244,17 +244,12 @@ def main():
         vec2 uv = gl_PointCoord * 2.0 - 1.0;
         float d = length(uv);
 
-        // sharper core
-        float core = exp(-d * d * 10.0);
+        float halo = exp(-d * d * 12);
+        float glow = exp(-d * d * 4.0);
+        float core = exp(-d * d * 32.0);
 
-        // wide strong glow
-        float glow = exp(-d * d * 2.0);
-
-        // boost intensity HARD
-        vec3 color = v_color * (core * 4.0 + glow * 1.0);
-
-        // alpha still needed for shaping
-        float alpha = clamp(core + glow, 0.0, 1.0);
+        vec3 color = v_color * (halo * 1.3 + glow * 2.8 + core * 2.5);
+        float alpha = clamp(halo * 0.55 + glow * 0.75 + core * 1.0, 0.0, 1.0);
 
         fragColor = vec4(color, alpha);
     }
@@ -555,6 +550,9 @@ def main():
     affinity_buf.bind_to_storage_buffer(11)
     field_buf_float.bind_to_storage_buffer(12)  # float field
     target_density_buf.bind_to_storage_buffer(13)
+
+    # We need field_buf_b for blur, but binding 10 is used by sigma.
+    # Solution: rebind during blur passes and restore after.
 
     # Set uniforms
     params = {
