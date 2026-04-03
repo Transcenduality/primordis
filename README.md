@@ -28,13 +28,7 @@ They **emerge**, evolve, and stabilize on their own.
 
 ## 📷 Screenshots
 
-![Swimmer](Atlas/swimmer.png)
-
-![Multicellular Form](Atlas/multicell.png)
-
-![Caterpillar](Atlas/caterpillar.png)
-
-![Macro Organism](Atlas/macroorganism.png)
+![1.2.4 Preview](Atlas/1.2.4.png)
 
 ---
 
