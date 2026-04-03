@@ -1,6 +1,6 @@
 # What's New?
 
-With v1.2.4, the program has been rewritten to support visual fx like glow, as well as supporting far more stable and complex emergent 'organisms'.
+With v1.2.5, the default parameters have been improved and more particle types are now simulated.
 
 # 🧬 Primordis
 
