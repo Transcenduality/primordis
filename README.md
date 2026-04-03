@@ -1,6 +1,6 @@
 # What's New?
 
-With v1.2.3, the default parameters set has been fine tuned via gradient descent.
+With v1.2.4, the program has been rewritten to support visual fx like glow, as well as supporting far more stable and complex emergent 'organisms'.
 
 # 🧬 Primordis
 
@@ -23,18 +23,6 @@ Just particles, forces, memory... and time.
 
 These aren't designed organisms.  
 They **emerge**, evolve, and stabilize on their own.
-
----
-
-## 🔥 The Edge of Complexity
-
-> **K = 100**, **Friction = 0.41**, **Particle Types = 32**, **Max Radius = 64**  
-> Known as the **Primordis Edge** - the zone where the most **sophisticated emergent structures** arise.
-
-At this edge, you'll observe:
-- Coordinated movement
-- Cooperative behavior between agents
-- **Formation of multicellular bodies** that **retain identity** across time
 
 ---
 
