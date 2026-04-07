@@ -1,7 +1,3 @@
-# What's New?
-
-With v1.2.5, the default parameters have been improved and more particle types are now simulated.
-
 # 🧬 Primordis
 
 - A digital emergence simulator where structure, motion, and proto-life arise from raw physics.
