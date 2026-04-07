@@ -24,7 +24,7 @@ They **emerge**, evolve, and stabilize on their own.
 
 ## 📷 Screenshots
 
-![1.2.4 Preview](Atlas/1.2.4.png)
+![1.3 Preview](Atlas/1.3_Preview.png)
 
 ---
 
