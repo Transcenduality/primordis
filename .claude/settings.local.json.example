@@ -1,0 +1,5 @@
+{
+  "env": {
+    "DGROUP_STANDARDS_API_KEY": "<paste-the-dgroup-standards-mcp-api-key-here>"
+  }
+}
