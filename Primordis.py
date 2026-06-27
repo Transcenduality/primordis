@@ -4,17 +4,18 @@ import numpy as np
 
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 1080, 720
 WORLD_WIDTH, WORLD_HEIGHT = 1080, 720
-NUM_TYPES = 32
-NUM_PARTICLES = 24_000                     # 32k particles
-ATTRACTION_K = 32.0
-REPULSION_K = 32.0
-MAX_RADIUS = 96
-COMPUTE_GROUP_SIZE = 256                   # tuned for 32k particles
-BIN_SIZE = MAX_RADIUS
-GRID_WIDTH = WORLD_WIDTH // BIN_SIZE
-GRID_HEIGHT = WORLD_HEIGHT // BIN_SIZE
+NUM_TYPES = 48
+NUM_PARTICLES = 24_000
+ATTRACTION_K = 16.0          # fixed – always strong enough for large organisms
+RATIO_INIT = 0.75             # repulsion = 0.75 * attraction (25% weaker)
+MAX_RADIUS = 128
+COMPUTE_GROUP_SIZE = 256
+BIN_SIZE = 64
+SEARCH_RANGE = (MAX_RADIUS + BIN_SIZE - 1) // BIN_SIZE
+GRID_WIDTH = (WORLD_WIDTH + BIN_SIZE - 1) // BIN_SIZE
+GRID_HEIGHT = (WORLD_HEIGHT + BIN_SIZE - 1) // BIN_SIZE
 NUM_BINS = GRID_WIDTH * GRID_HEIGHT
-MAX_BIN_PARTICLES = 512                  # increased to avoid overflow
+MAX_BIN_PARTICLES = 256
 
 class Slider:
     def __init__(self, x, y, width, height, min_val, max_val, initial_val, label):
@@ -57,17 +58,28 @@ class Slider:
         surface.blit(label_text, (self.rect.x, self.rect.y - 25))
 
 def set_parameters():
-    forces = np.random.uniform(0.1, 0.8, (NUM_TYPES, NUM_TYPES)).astype(np.float32)
-    mask = np.random.random((NUM_TYPES, NUM_TYPES)) < 0.5
-    forces[mask] *= -1
-    min_distances = np.random.uniform(4, 12, (NUM_TYPES, NUM_TYPES)).astype(np.float32)
-    radii = np.random.uniform(20, MAX_RADIUS, (NUM_TYPES, NUM_TYPES)).astype(np.float32)
-    return forces, min_distances, radii
+    raw_forces = np.random.uniform(-1.0, 1.0, (NUM_TYPES, NUM_TYPES))
+    forces = 0.7 * raw_forces + 0.3 * raw_forces.T
+    np.fill_diagonal(forces, 0.7)
+    min_distances = np.where(
+        forces > 0,
+        np.random.uniform(10.0, 16.0, (NUM_TYPES, NUM_TYPES)),
+        np.random.uniform(12.0, 18.0, (NUM_TYPES, NUM_TYPES))
+    )
+    radii = np.random.uniform(60.0, MAX_RADIUS, (NUM_TYPES, NUM_TYPES))
+    return forces.astype(np.float32), min_distances.astype(np.float32), radii.astype(np.float32)
 
 def random_type_colors():
     return np.random.rand(NUM_TYPES, 3).astype(np.float32)
 
 def main():
+    # Camera state
+    cam_x = WORLD_WIDTH / 2.0
+    cam_y = WORLD_HEIGHT / 2.0
+    zoom = 1.0
+    PAN_SPEED = 300.0
+    ZOOM_SPEED = 2.0
+
     pygame.init()
     pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 4)
     pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
@@ -78,15 +90,13 @@ def main():
     ctx.enable(moderngl.PROGRAM_POINT_SIZE)
     ctx.blend_func = moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA
 
-    # UI surface and font
     ui_surface = pygame.Surface((DISPLAY_WIDTH, DISPLAY_HEIGHT), pygame.SRCALPHA)
     font = pygame.font.Font(None, 24)
     
-    # Sliders: attraction K, repulsion K, friction
-    attraction_k_slider = Slider(50, 50, 200, 20, 0.1, 128.0, ATTRACTION_K, "Attraction K")
-    repulsion_k_slider = Slider(50, 100, 200, 20, 0.1, 128.0, REPULSION_K, "Repulsion K")
-    friction_slider = Slider(50, 150, 200, 20, 0.05, 0.99, 0.25, "Particle Drift Strength")
-    sliders = [attraction_k_slider, repulsion_k_slider, friction_slider]
+    # New slider: ratio (repulsion = ratio * attraction)
+    ratio_slider = Slider(50, 50, 200, 20, 0.5, 0.99, RATIO_INIT, "Repulsion/Attraction Ratio")
+    friction_slider = Slider(50, 100, 200, 20, 0.05, 0.99, 0.25, "Particle Drift Strength")
+    sliders = [ratio_slider, friction_slider]
 
     # Particle data
     positions = np.random.rand(NUM_PARTICLES, 2).astype(np.float32)
@@ -110,31 +120,42 @@ def main():
     bin_counts_buf = ctx.buffer(reserve=NUM_BINS * 4, dynamic=True)
     bin_particles_buf = ctx.buffer(reserve=NUM_BINS * MAX_BIN_PARTICLES * 4, dynamic=True)
 
-    # Vertex and fragment shaders for rendering points
+    # Shaders
     vertex_shader = f'''
     #version 430
     in vec2 in_pos;
     in vec3 in_color;
     out vec3 v_color;
+    uniform vec2 cam;
+    uniform float zoom;
+    uniform vec2 world;
     void main() {{
         v_color = in_color;
-        gl_Position = vec4((in_pos.x / {WORLD_WIDTH}.0) * 2.0 - 1.0,
-                           (in_pos.y / {WORLD_HEIGHT}.0) * 2.0 - 1.0, 0.0, 1.0);
-        gl_PointSize = 2.0;
+        vec2 delta = in_pos - cam;
+        delta = delta - world * round(delta / world);
+        gl_Position = vec4(delta.x * (2.0 * zoom / world.x),
+                           delta.y * (2.0 * zoom / world.y),
+                           0.0, 1.0);
+        gl_PointSize = 3.0 * zoom;
     }}
     '''
+
     fragment_shader = '''
     #version 430
     in vec3 v_color;
     out vec4 fragColor;
     void main() {
-        fragColor = vec4(v_color, 1.0);
+        vec2 p = gl_PointCoord - vec2(0.5);
+        float dist = length(p);
+        if (dist > 0.5) discard;
+        float alpha = 1.0 - smoothstep(0.45, 0.5, dist);
+        fragColor = vec4(v_color, alpha);
     }
     '''
+
     prog = ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)
     vao = ctx.vertex_array(prog, [(pos_buffer, '2f', 'in_pos'), (color_buffer, '3f', 'in_color')])
 
-    # Binning compute shader
     binning_shader = ctx.compute_shader(f'''
     #version 430
     layout(local_size_x = {COMPUTE_GROUP_SIZE}) in;
@@ -149,10 +170,8 @@ def main():
         uint i = gl_GlobalInvocationID.x;
         if (i >= num_particles) return;
         vec2 p = pos[i];
-        int x = int(p.x / bin_size);
-        int y = int(p.y / bin_size);
-        x = clamp(x, 0, grid_width - 1);
-        y = clamp(y, 0, grid_height - 1);
+        int x = clamp(int(p.x / bin_size), 0, grid_width - 1);
+        int y = clamp(int(p.y / bin_size), 0, grid_height - 1);
         int bin_idx = y * grid_width + x;
         uint offset = atomicAdd(bin_counts[bin_idx], 1);
         if (offset < {MAX_BIN_PARTICLES})
@@ -160,7 +179,6 @@ def main():
     }}
     ''')
 
-    # Interaction compute shader (attraction/repulsion with separate K's)
     interaction_shader = ctx.compute_shader(f'''
     #version 430
     layout(local_size_x = {COMPUTE_GROUP_SIZE}) in;
@@ -183,23 +201,28 @@ def main():
     uniform float bin_size;
     uniform int grid_width;
     uniform int grid_height;
+
     int wrap(int val, int max_val) {{
         return (val + max_val) % max_val;
     }}
+
     void main() {{
         uint i = gl_GlobalInvocationID.x;
         if (i >= num_particles) return;
+
         vec2 p = pos[i];
         vec2 v = vel[i];
         vec2 f = vec2(0.0);
         int my_type = types[i];
         int cx = int(p.x / bin_size);
         int cy = int(p.y / bin_size);
-        float half_world_width = world_width * 0.5;
-        float half_world_height = world_height * 0.5;
-        for (int dx = -1; dx <= 1; dx++) {{
+        float half_w = world_width * 0.5;
+        float half_h = world_height * 0.5;
+
+        const int sr = {SEARCH_RANGE};
+        for (int dx = -sr; dx <= sr; dx++) {{
             int nx = wrap(cx + dx, grid_width);
-            for (int dy = -1; dy <= 1; dy++) {{
+            for (int dy = -sr; dy <= sr; dy++) {{
                 int ny = wrap(cy + dy, grid_height);
                 int bin_idx = ny * grid_width + nx;
                 uint count = bin_counts[bin_idx];
@@ -207,10 +230,10 @@ def main():
                     uint j = bin_particles[bin_idx * {MAX_BIN_PARTICLES} + b];
                     if (j == i) continue;
                     vec2 d = pos[j] - p;
-                    if (d.x > half_world_width) d.x -= world_width;
-                    else if (d.x < -half_world_width) d.x += world_width;
-                    if (d.y > half_world_height) d.y -= world_height;
-                    else if (d.y < -half_world_height) d.y += world_height;
+                    if (d.x > half_w) d.x -= world_width;
+                    else if (d.x < -half_w) d.x += world_width;
+                    if (d.y > half_h) d.y -= world_height;
+                    else if (d.y < -half_h) d.y += world_height;
                     float dist = length(d);
                     if (dist > max_radius || dist < 0.1) continue;
                     vec2 dn = d / dist;
@@ -220,15 +243,14 @@ def main():
                     float rad = radii[idx];
                     float force_strength = forces[idx];
                     if (dist < mind) {{
-                        // Repulsion
                         f -= dn * abs(force_strength) * 5.0 * (1.0 - dist / mind) * K_repulsion;
                     }} else if (dist < rad) {{
-                        // Attraction
                         f += dn * force_strength * (1.0 - dist / rad) * K_attraction;
                     }}
                 }}
             }}
         }}
+
         v += f * delta_time;
         v *= friction;
         p += v * delta_time;
@@ -241,7 +263,6 @@ def main():
     }}
     ''')
 
-    # Clear bin counts shader
     clear_counts_shader = ctx.compute_shader(f'''
     #version 430
     layout(local_size_x = 256) in;
@@ -254,18 +275,25 @@ def main():
     ''')
 
     # Bind storage buffers
-    buffers = [pos_buffer, vel_buffer, type_buffer, forces_buf, min_dist_buf, radii_buf, bin_counts_buf, bin_particles_buf]
+    buffers = [pos_buffer, vel_buffer, type_buffer, forces_buf, min_dist_buf, radii_buf,
+               bin_counts_buf, bin_particles_buf]
     for i, buf in enumerate(buffers):
         buf.bind_to_storage_buffer(i)
 
-    # Set initial uniforms
+    # Set uniforms – now K_repulsion comes from ratio slider
+    def update_forces():
+        attraction = ATTRACTION_K
+        repulsion = attraction * ratio_slider.val
+        interaction_shader['K_attraction'].value = attraction
+        interaction_shader['K_repulsion'].value = repulsion
+        interaction_shader['friction'].value = friction_slider.val
+
+    update_forces()
+
     for name, value in [
         ('num_particles', NUM_PARTICLES),
         ('world_width', float(WORLD_WIDTH)),
         ('world_height', float(WORLD_HEIGHT)),
-        ('K_attraction', attraction_k_slider.val),
-        ('K_repulsion', repulsion_k_slider.val),
-        ('friction', friction_slider.val),
         ('max_radius', float(MAX_RADIUS)),
         ('bin_size', float(BIN_SIZE)),
         ('grid_width', GRID_WIDTH),
@@ -276,8 +304,11 @@ def main():
             binning_shader[name].value = value
 
     clear_counts_shader['num_bins'].value = NUM_BINS
+    prog['cam'] = (cam_x, cam_y)
+    prog['zoom'] = zoom
+    prog['world'] = (float(WORLD_WIDTH), float(WORLD_HEIGHT))
 
-    # Prepare persistent UI texture and rendering objects
+    # UI quad
     ui_texture = ctx.texture((DISPLAY_WIDTH, DISPLAY_HEIGHT), 4, dtype='f1')
     ui_texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
     ui_vertex_shader = '''
@@ -315,37 +346,49 @@ def main():
 
     while running:
         dt = clock.tick(60) / 1000.0
-        
-        # Event handling
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key in [pygame.K_ESCAPE, pygame.K_q]):
                 running = False
             for slider in sliders:
                 if slider.handle_event(event):
-                    interaction_shader['K_attraction'].value = attraction_k_slider.val
-                    interaction_shader['K_repulsion'].value = repulsion_k_slider.val
-                    interaction_shader['friction'].value = friction_slider.val
+                    update_forces()
 
-        # Simulation steps
+        # Camera
+        keys = pygame.key.get_pressed()
+        pan_world_speed = PAN_SPEED / zoom
+        if keys[pygame.K_w]:    cam_y += pan_world_speed * dt
+        if keys[pygame.K_s]:    cam_y -= pan_world_speed * dt
+        if keys[pygame.K_a]:    cam_x -= pan_world_speed * dt
+        if keys[pygame.K_d]:    cam_x += pan_world_speed * dt
+
+        zoom_factor = 1.0 + ZOOM_SPEED * dt
+        if keys[pygame.K_UP]:    zoom *= zoom_factor
+        if keys[pygame.K_DOWN]:  zoom /= zoom_factor
+        zoom = max(zoom, 1.0)
+
+        prog['cam'] = (cam_x, cam_y)
+        prog['zoom'] = zoom
+
+        # Simulation
         ctx.clear(0.02, 0.02, 0.08, 1.0)
         clear_counts_shader.run(group_x=(NUM_BINS + 255) // 256)
         binning_shader.run(group_x=(NUM_PARTICLES + COMPUTE_GROUP_SIZE - 1) // COMPUTE_GROUP_SIZE)
+        ctx.memory_barrier(barriers=moderngl.SHADER_STORAGE_BARRIER_BIT)
         interaction_shader['delta_time'].value = dt * sim_speed
         interaction_shader.run(group_x=(NUM_PARTICLES + COMPUTE_GROUP_SIZE - 1) // COMPUTE_GROUP_SIZE)
         vao.render(moderngl.POINTS)
-        
-        # Draw UI overlay (reuse texture)
+
+        # UI overlay
         ui_surface.fill((0, 0, 0, 0))
         for slider in sliders:
             slider.draw(ui_surface, font)
         ui_data = pygame.image.tostring(ui_surface, 'RGBA')
         ui_texture.write(ui_data)
-        
-        # Render UI quad
         ui_texture.use(0)
         ui_prog['ui_texture'].value = 0
         ui_vao.render(moderngl.TRIANGLE_STRIP)
-        
+
         pygame.display.flip()
 
     pygame.quit()
