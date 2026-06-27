@@ -21,10 +21,11 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # State management — Riverpod (DGROUP_WEB-ADR-017). Code-gen via riverpod_generator.
-  # Pinned to 3.2.x to match riverpod_annotation 4.0.2 -> riverpod 3.2.1 (the
-  # version the codegen chain resolves to as of 2026-06; ORG-ADR-047's 3.3.0
-  # figure is now ahead of the resolvable set).
-  flutter_riverpod: ^3.2.0
+  # flutter_riverpod resolves to 3.3.x and is compatible with riverpod 3.2.1
+  # (pulled transitively by riverpod_annotation 4.0.2). pubspec.lock pins the
+  # exact versions for reproducible installs. See ORG-ADR-047 for the
+  # coordinated analyzer-9 code-gen set.
+  flutter_riverpod: ^3.3.0
   riverpod_annotation: ^4.0.0
 
   # Models — Freezed (+ json_serializable) for all data classes.
