@@ -5,14 +5,17 @@ import 'package:primordis/app/app.dart';
 
 void main() {
   setUpAll(() {
-    // Don't hit the network for fonts in tests (keeps pumps deterministic).
+    // Disable network font fetching so pumpAndSettle() below doesn't wait on a
+    // pending GoogleFonts request (which would otherwise time out in tests).
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
   testWidgets('app boots into a ProviderScope and renders the home route',
       (tester) async {
     await tester.pumpWidget(const ProviderScope(child: PrimordisApp()));
-    await tester.pump();
+    // pumpAndSettle (not a single pump) so GoRouter finishes initial routing
+    // deterministically.
+    await tester.pumpAndSettle();
 
     // ProviderScope is mounted at the root (Riverpod is wired in).
     expect(find.byType(ProviderScope), findsOneWidget);

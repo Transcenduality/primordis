@@ -1,11 +1,11 @@
 {
-    "name": "primordis",
-    "short_name": "primordis",
+    "name": "Primordis",
+    "short_name": "Primordis",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Primordis — a GPU particle-life simulator (Flutter Web + macOS).",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
