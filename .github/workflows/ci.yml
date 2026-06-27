@@ -1,0 +1,24 @@
+name: CI
+
+# Lightweight gate: analyze + test on every push to main and every PR.
+# Full web (--wasm) and macOS build/sign pipelines land in PRIMORDIS-TASK-010
+# and PRIMORDIS-TASK-016. Actions are tag-pinned here; SHA-pinning is a CI
+# hardening follow-up (house standard).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter --version
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter analyze
+      - run: flutter test
