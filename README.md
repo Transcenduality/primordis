@@ -12,7 +12,7 @@ Just particles, forces, memory... and time.
 
 ## 🌌 What Happens Inside
 
-- 💠 Particles of 32 types interact via attractive/repulsive force matrices
+- 💠 Particles of 48 types interact via attractive/repulsive force matrices
 - 🔁 Local recursive loops form **stable arrangements**
 - 🐛 Some clusters begin to move as **swimmers** and **caterpillars**
 - 🧬 Eventually, collections of swimmers **cohere** into **multicellular structures** - Organized, persistent, and adaptive.
