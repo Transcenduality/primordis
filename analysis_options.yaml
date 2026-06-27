@@ -1,0 +1,20 @@
+# Primordis analysis options.
+# Base: package:lint (ORG Flutter standards). Zero-warning policy enforced in CI.
+include: package:lint/analysis_options.yaml
+
+analyzer:
+  # Generated code is never hand-edited and is excluded from analysis.
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    # Treat package-import discipline as an error (no relative imports).
+    always_use_package_imports: error
+
+linter:
+  rules:
+    # House standard: package imports only, never relative.
+    always_use_package_imports: true
+    # pubspec is grouped-by-purpose with comments (matches the house standards'
+    # own example pubspec) rather than alphabetical.
+    sort_pub_dependencies: false

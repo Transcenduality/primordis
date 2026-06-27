@@ -1,0 +1,69 @@
+name: primordis
+description: "Primordis — a GPU particle-life simulator, as a Flutter Web + macOS app."
+publish_to: 'none'
+
+# Versioning: 0.1.0 baseline for the Flutter rewrite (the Python reference line ended at 1.3).
+# Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.4
+
+# Package versions follow ORG-ADR-047 (Flutter Build Ecosystem Coordinated Upgrade):
+# all code-gen packages share an `analyzer` floor and must move together.
+dependencies:
+  flutter:
+    sdk: flutter
+  # url strategy (usePathUrlStrategy) per DGROUP_WEB-ADR-021; sdk package.
+  flutter_web_plugins:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management — Riverpod (DGROUP_WEB-ADR-017). Code-gen via riverpod_generator.
+  # Pinned to 3.2.x to match riverpod_annotation 4.0.2 -> riverpod 3.2.1 (the
+  # version the codegen chain resolves to as of 2026-06; ORG-ADR-047's 3.3.0
+  # figure is now ahead of the resolvable set).
+  flutter_riverpod: ^3.2.0
+  riverpod_annotation: ^4.0.0
+
+  # Models — Freezed (+ json_serializable) for all data classes.
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+  # Routing — GoRouter (DGROUP_WEB-ADR-018).
+  go_router: ^16.2.0
+
+  # Typography — GoogleFonts (house standard; no hardcoded fontFamily).
+  google_fonts: ^8.0.0
+
+  # Browser interop — package:web + dart:js_interop ONLY. Legacy dart:html /
+  # dart:js_util are DISALLOWED anywhere in the tree (required for `flutter
+  # build web --wasm`; see PRIMORDIS-ADR-007 / ORG Flutter standards).
+  web: ^1.1.0
+
+  # NOTE: Retrofit + Dio are house standards but intentionally OMITTED — Primordis
+  # has no networking. Add them only if/when a network need appears.
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Lint base — package:lint, zero-warning policy (ORG Flutter standards).
+  lint: ^2.0.0
+
+  # Code generation (move together per ORG-ADR-047).
+  build_runner: ^2.4.13
+  freezed: ^3.2.0
+  riverpod_generator: ^4.0.0
+  # Pinned <6.13.1: 6.13.1+ needs analyzer >=10, which conflicts with
+  # riverpod_generator ^4.0.0 (analyzer ^9). See ORG-ADR-047.
+  json_serializable: ">=6.11.4 <6.13.1"
+
+  # Required for the `Override` type in provider tests (Riverpod 3).
+  riverpod: ^3.2.1
+
+flutter:
+  uses-material-design: true
+  # The WGSL kernel asset (lib/sim/kernel/primordis.wgsl) is registered in
+  # PRIMORDIS-TASK-003; no assets needed for the scaffold.
