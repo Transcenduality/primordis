@@ -4,10 +4,9 @@ import numpy as np
 
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 1080, 720
 WORLD_WIDTH, WORLD_HEIGHT = 1080, 720
-NUM_TYPES = 48
-NUM_PARTICLES = 24_000
-ATTRACTION_K = 16.0          # fixed – always strong enough for large organisms
-RATIO_INIT = 0.75             # repulsion = 0.75 * attraction (25% weaker)
+NUM_PARTICLES = 16_000
+ATTRACTION_K = 64.0          
+RATIO_INIT = 1             
 MAX_RADIUS = 128
 COMPUTE_GROUP_SIZE = 256
 BIN_SIZE = 64
@@ -57,21 +56,6 @@ class Slider:
         label_text = font.render(f"{self.label}: {self.val:.3f}", True, (255, 255, 255))
         surface.blit(label_text, (self.rect.x, self.rect.y - 25))
 
-def set_parameters():
-    raw_forces = np.random.uniform(-1.0, 1.0, (NUM_TYPES, NUM_TYPES))
-    forces = 0.7 * raw_forces + 0.3 * raw_forces.T
-    np.fill_diagonal(forces, 0.7)
-    min_distances = np.where(
-        forces > 0,
-        np.random.uniform(10.0, 16.0, (NUM_TYPES, NUM_TYPES)),
-        np.random.uniform(12.0, 18.0, (NUM_TYPES, NUM_TYPES))
-    )
-    radii = np.random.uniform(60.0, MAX_RADIUS, (NUM_TYPES, NUM_TYPES))
-    return forces.astype(np.float32), min_distances.astype(np.float32), radii.astype(np.float32)
-
-def random_type_colors():
-    return np.random.rand(NUM_TYPES, 3).astype(np.float32)
-
 def main():
     # Camera state
     cam_x = WORLD_WIDTH / 2.0
@@ -93,30 +77,25 @@ def main():
     ui_surface = pygame.Surface((DISPLAY_WIDTH, DISPLAY_HEIGHT), pygame.SRCALPHA)
     font = pygame.font.Font(None, 24)
     
-    # New slider: ratio (repulsion = ratio * attraction)
     ratio_slider = Slider(50, 50, 200, 20, 0.5, 0.99, RATIO_INIT, "Repulsion/Attraction Ratio")
     friction_slider = Slider(50, 100, 200, 20, 0.05, 0.99, 0.25, "Particle Drift Strength")
     sliders = [ratio_slider, friction_slider]
 
-    # Particle data
+    # Initialize Particle Data
     positions = np.random.rand(NUM_PARTICLES, 2).astype(np.float32)
     positions[:, 0] *= WORLD_WIDTH
     positions[:, 1] *= WORLD_HEIGHT
     velocities = np.random.uniform(-8, 8, (NUM_PARTICLES, 2)).astype(np.float32)
-    types = np.random.randint(0, NUM_TYPES, NUM_PARTICLES, dtype=np.int32)
-    colors = random_type_colors()
-    per_particle_colors = colors[types]
-
-    forces, min_distances, radii = set_parameters()
+    
+    # Initialize genomes: 6-dimensional unit vectors representing genetic information
+    raw_genomes = np.random.uniform(-1, 1, (NUM_PARTICLES, 6)).astype(np.float32)
+    norms = np.linalg.norm(raw_genomes, axis=1, keepdims=True)
+    genomes = raw_genomes / norms
 
     # Buffers
     pos_buffer = ctx.buffer(positions.tobytes(), dynamic=True)
     vel_buffer = ctx.buffer(velocities.tobytes(), dynamic=True)
-    type_buffer = ctx.buffer(types.tobytes())
-    color_buffer = ctx.buffer(per_particle_colors.tobytes())
-    forces_buf = ctx.buffer(forces.tobytes())
-    min_dist_buf = ctx.buffer(min_distances.tobytes())
-    radii_buf = ctx.buffer(radii.tobytes())
+    genome_buffer = ctx.buffer(genomes.tobytes(), dynamic=True)
     bin_counts_buf = ctx.buffer(reserve=NUM_BINS * 4, dynamic=True)
     bin_particles_buf = ctx.buffer(reserve=NUM_BINS * MAX_BIN_PARTICLES * 4, dynamic=True)
 
@@ -124,13 +103,15 @@ def main():
     vertex_shader = f'''
     #version 430
     in vec2 in_pos;
-    in vec3 in_color;
+    in vec4 in_genome;
     out vec3 v_color;
     uniform vec2 cam;
     uniform float zoom;
     uniform vec2 world;
     void main() {{
-        v_color = in_color;
+        // Shift genome from [-1, 1] to [0, 1] for smooth color transitions
+        v_color = in_genome.xyz * 0.5 + 0.5; 
+        
         vec2 delta = in_pos - cam;
         delta = delta - world * round(delta / world);
         gl_Position = vec4(delta.x * (2.0 * zoom / world.x),
@@ -154,7 +135,7 @@ def main():
     '''
 
     prog = ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)
-    vao = ctx.vertex_array(prog, [(pos_buffer, '2f', 'in_pos'), (color_buffer, '3f', 'in_color')])
+    vao = ctx.vertex_array(prog, [(pos_buffer, '2f', 'in_pos'), (genome_buffer, '4f 8x', 'in_genome')])
 
     binning_shader = ctx.compute_shader(f'''
     #version 430
@@ -184,12 +165,10 @@ def main():
     layout(local_size_x = {COMPUTE_GROUP_SIZE}) in;
     layout(std430, binding=0) buffer Positions {{ vec2 pos[]; }};
     layout(std430, binding=1) buffer Velocities {{ vec2 vel[]; }};
-    layout(std430, binding=2) buffer Types {{ int types[]; }};
-    layout(std430, binding=3) readonly buffer Forces {{ float forces[]; }};
-    layout(std430, binding=4) readonly buffer MinDistances {{ float min_distances[]; }};
-    layout(std430, binding=5) readonly buffer Radii {{ float radii[]; }};
+    layout(std430, binding=2) buffer Genomes {{ float genomes[]; }};
     layout(std430, binding=6) readonly buffer BinCounts {{ uint bin_counts[]; }};
     layout(std430, binding=7) readonly buffer BinParticles {{ uint bin_particles[]; }};
+
     uniform int num_particles;
     uniform float world_width;
     uniform float world_height;
@@ -202,9 +181,8 @@ def main():
     uniform int grid_width;
     uniform int grid_height;
 
-    int wrap(int val, int max_val) {{
-        return (val + max_val) % max_val;
-    }}
+    int wrap(int val, int max_val) {{ return (val + max_val) % max_val; }}
+    float rand(vec2 co){{ return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453); }}
 
     void main() {{
         uint i = gl_GlobalInvocationID.x;
@@ -212,8 +190,17 @@ def main():
 
         vec2 p = pos[i];
         vec2 v = vel[i];
+
+        float my_genome[6];
+        for(int g = 0; g < 6; g++) {{
+            my_genome[g] = genomes[i * 6 + g];
+        }}
+
+        // ---- Accumulated genetic repulsion (divergence) ----
+        float genetic_repulsion[6] = float[6](0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        const float divergence_strength = 0.1;   // tune this slider-like value
+
         vec2 f = vec2(0.0);
-        int my_type = types[i];
         int cx = int(p.x / bin_size);
         int cy = int(p.y / bin_size);
         float half_w = world_width * 0.5;
@@ -229,37 +216,78 @@ def main():
                 for (uint b = 0u; b < count; b++) {{
                     uint j = bin_particles[bin_idx * {MAX_BIN_PARTICLES} + b];
                     if (j == i) continue;
+
                     vec2 d = pos[j] - p;
                     if (d.x > half_w) d.x -= world_width;
                     else if (d.x < -half_w) d.x += world_width;
                     if (d.y > half_h) d.y -= world_height;
                     else if (d.y < -half_h) d.y += world_height;
+
                     float dist = length(d);
                     if (dist > max_radius || dist < 0.1) continue;
                     vec2 dn = d / dist;
-                    int other_type = types[j];
-                    int idx = my_type * {NUM_TYPES} + other_type;
-                    float mind = min_distances[idx];
-                    float rad = radii[idx];
-                    float force_strength = forces[idx];
+
+                    float other_genome[6];
+                    float compatibility = 0.0;
+                    for(int g = 0; g < 6; g++) {{
+                        other_genome[g] = genomes[j * 6 + g];
+                        compatibility += my_genome[g] * other_genome[g];
+                    }}
+
+                    // Personal space (based on the 4th gene)
+                    float mind = 8.0 + 2.0 * (other_genome[3] * 0.5 + 0.5);
+
                     if (dist < mind) {{
-                        f -= dn * abs(force_strength) * 5.0 * (1.0 - dist / mind) * K_repulsion;
-                    }} else if (dist < rad) {{
-                        f += dn * force_strength * (1.0 - dist / rad) * K_attraction;
+                        f -= dn * 8.0 * (1.0 - dist / mind) * K_repulsion;
+                    }} else if (dist < max_radius) {{
+                        f += dn * compatibility * (1.0 - dist / max_radius) * K_attraction;
+
+                        // ---- NEW: genetic divergence instead of homogenisation ----
+                        float similarity = compatibility;  // [-1, 1]
+                        float threshold = 0.5;              // start diverging above this
+                        if (similarity > threshold) {{
+                            float force = (similarity - threshold) * divergence_strength;
+                            for(int g = 0; g < 6; g++) {{
+                                // Push my_genome AWAY from other_genome
+                                genetic_repulsion[g] += (my_genome[g] - other_genome[g]) * force;
+                            }}
+                        }}
                     }}
                 }}
             }}
         }}
 
+        float max_force = 2000.0;
+        if (length(f) > max_force) f = normalize(f) * max_force;
+
         v += f * delta_time;
         v *= friction;
+
+        float max_vel = 150.0;
+        if (length(v) > max_vel) v = normalize(v) * max_vel;
+
         p += v * delta_time;
+
         if (p.x < 0.0) p.x += world_width;
         else if (p.x >= world_width) p.x -= world_width;
         if (p.y < 0.0) p.y += world_height;
         else if (p.y >= world_height) p.y -= world_height;
+
         pos[i] = p;
         vel[i] = v;
+
+        // Apply genetic repulsion, and re‑normalise
+        float drift_speed = 0.5;   // same as before, now directly used
+        float len_sq = 0.0;
+        for(int g = 0; g < 6; g++) {{
+            my_genome[g] += genetic_repulsion[g] * drift_speed * delta_time;
+            len_sq += my_genome[g] * my_genome[g];
+        }}
+
+        float inv_len = inversesqrt(len_sq);
+        for(int g = 0; g < 6; g++) {{
+            genomes[i * 6 + g] = my_genome[g] * inv_len;
+        }}
     }}
     ''')
 
@@ -275,12 +303,12 @@ def main():
     ''')
 
     # Bind storage buffers
-    buffers = [pos_buffer, vel_buffer, type_buffer, forces_buf, min_dist_buf, radii_buf,
+    buffers = [pos_buffer, vel_buffer, genome_buffer, None, None, None,
                bin_counts_buf, bin_particles_buf]
     for i, buf in enumerate(buffers):
-        buf.bind_to_storage_buffer(i)
+        if buf is not None:
+            buf.bind_to_storage_buffer(i)
 
-    # Set uniforms – now K_repulsion comes from ratio slider
     def update_forces():
         attraction = ATTRACTION_K
         repulsion = attraction * ratio_slider.val
@@ -308,7 +336,6 @@ def main():
     prog['zoom'] = zoom
     prog['world'] = (float(WORLD_WIDTH), float(WORLD_HEIGHT))
 
-    # UI quad
     ui_texture = ctx.texture((DISPLAY_WIDTH, DISPLAY_HEIGHT), 4, dtype='f1')
     ui_texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
     ui_vertex_shader = '''
@@ -343,9 +370,11 @@ def main():
     clock = pygame.time.Clock()
     sim_speed = 1
     running = True
+    total_time = 0.0
 
     while running:
         dt = clock.tick(60) / 1000.0
+        total_time += dt
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key in [pygame.K_ESCAPE, pygame.K_q]):
@@ -354,7 +383,7 @@ def main():
                 if slider.handle_event(event):
                     update_forces()
 
-        # Camera
+        # Camera controls
         keys = pygame.key.get_pressed()
         pan_world_speed = PAN_SPEED / zoom
         if keys[pygame.K_w]:    cam_y += pan_world_speed * dt
@@ -370,16 +399,18 @@ def main():
         prog['cam'] = (cam_x, cam_y)
         prog['zoom'] = zoom
 
-        # Simulation
+        # Simulation Loop
         ctx.clear(0.02, 0.02, 0.08, 1.0)
         clear_counts_shader.run(group_x=(NUM_BINS + 255) // 256)
         binning_shader.run(group_x=(NUM_PARTICLES + COMPUTE_GROUP_SIZE - 1) // COMPUTE_GROUP_SIZE)
         ctx.memory_barrier(barriers=moderngl.SHADER_STORAGE_BARRIER_BIT)
+        
         interaction_shader['delta_time'].value = dt * sim_speed
         interaction_shader.run(group_x=(NUM_PARTICLES + COMPUTE_GROUP_SIZE - 1) // COMPUTE_GROUP_SIZE)
+        
         vao.render(moderngl.POINTS)
 
-        # UI overlay
+        # UI rendering
         ui_surface.fill((0, 0, 0, 0))
         for slider in sliders:
             slider.draw(ui_surface, font)
