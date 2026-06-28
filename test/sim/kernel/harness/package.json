@@ -1,0 +1,14 @@
+{
+  "name": "primordis-kernel-harness",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone WebGPU validation harness for the Primordis WGSL kernel (PRIMORDIS-TASK-003).",
+  "scripts": {
+    "test": "node run.mjs",
+    "smoke": "node run.mjs --smoke"
+  },
+  "devDependencies": {
+    "@kmamal/gpu": "^0.2.0"
+  }
+}
