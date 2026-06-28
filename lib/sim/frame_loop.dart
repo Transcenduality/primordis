@@ -16,6 +16,11 @@ import 'package:primordis/sim/sim_backend.dart';
 ///
 /// Pausing (the reduced-motion forward-hook, [PRIMORDIS-ADR-006]) suppresses
 /// stepping: a paused tick advances nothing and holds the last composited frame.
+///
+/// The loop assumes the backend has already been brought up — `await init()`
+/// then `await seed()` — by its driver before the first [tick]; it only
+/// sequences the per-frame contract and never performs lifecycle bring-up
+/// itself (those calls are async; see [SimBackend] and `simBackendProvider`).
 class FrameLoop {
   FrameLoop({required SimBackend backend}) : _backend = backend;
 

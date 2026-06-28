@@ -83,6 +83,15 @@ class SimParamsController extends _$SimParamsController {
 /// Defaults to [FakeSimBackend] so the app and frame loop run with no GPU; a
 /// real backend is injected later by overriding this provider. Kept alive so the
 /// backend persists for the app's lifetime, and disposed with the container.
+///
+/// **Lifecycle bring-up is not done here.** This provider only constructs and
+/// exposes the handle; it deliberately does NOT call `init()`/`seed()` because
+/// those are async and out of a synchronous provider's reach. The run driver
+/// (the `Ticker` owner added in [PRIMORDIS-TASK-005] / [PRIMORDIS-TASK-006]) must
+/// `await backend.init()` then `await backend.seed(seed)` (and apply the initial
+/// params) **before** the first [FrameLoop.tick] — the order documented on
+/// [SimBackend]. The fake tolerates being stepped un-initialized; a real
+/// GPU/CPU backend will not, so the driver owns that sequencing.
 @Riverpod(keepAlive: true)
 SimBackend simBackend(Ref ref) {
   final backend = FakeSimBackend();
@@ -90,8 +99,11 @@ SimBackend simBackend(Ref ref) {
   return backend;
 }
 
-/// The [FrameLoop] bound to the active [simBackendProvider]. The UI's `Ticker`
-/// drives [FrameLoop.tick] each frame ([PRIMORDIS-TASK-005] / [PRIMORDIS-TASK-006]).
+/// The [FrameLoop] bound to the active [simBackendProvider].
+///
+/// The UI's `Ticker` drives [FrameLoop.tick] each frame ([PRIMORDIS-TASK-005] /
+/// [PRIMORDIS-TASK-006]). The loop assumes the backend has already been
+/// `init()`/`seed()`ed by that driver — see [simBackendProvider].
 @Riverpod(keepAlive: true)
 FrameLoop frameLoop(Ref ref) {
   final backend = ref.watch(simBackendProvider);

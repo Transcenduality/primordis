@@ -19,12 +19,19 @@ import 'dart:typed_data';
 /// This file is platform-neutral (only `dart:typed_data`); it compiles
 /// identically on web and native, per [PRIMORDIS-ADR-001].
 class TypeMatrix {
-  /// Wraps [values] as a [dimension]x[dimension] row-major matrix.
+  /// Wraps a [dimension]x[dimension] row-major matrix.
   ///
-  /// [values] is taken by reference (not copied) for efficiency; callers must
-  /// not mutate it afterwards. Use [TypeMatrix.fromRows] / [TypeMatrix.generate]
-  /// to build one from scratch.
-  TypeMatrix(this.dimension, this.values)
+  /// [values] is **defensively copied** so the matrix is truly immutable: a
+  /// caller may reuse or mutate their buffer afterwards without affecting this
+  /// matrix's contents, equality, or hashCode (which the frame loop's
+  /// change-detection relies on). Use [TypeMatrix.fromRows] /
+  /// [TypeMatrix.generate] to build one from scratch.
+  TypeMatrix(int dimension, Float32List values)
+      : this._owned(dimension, Float32List.fromList(values));
+
+  /// Internal: takes ownership of [values] without copying. Used only by the
+  /// factories, which build a fresh buffer that is never exposed before wrapping.
+  TypeMatrix._owned(this.dimension, this.values)
       : assert(dimension > 0, 'dimension must be positive'),
         assert(
           values.length == dimension * dimension,
@@ -43,7 +50,7 @@ class TypeMatrix {
         data[k++] = cell(row, col);
       }
     }
-    return TypeMatrix(dimension, data);
+    return TypeMatrix._owned(dimension, data);
   }
 
   /// Builds a matrix from a list of equal-length rows.
@@ -60,7 +67,7 @@ class TypeMatrix {
         data[k++] = rows[row][col];
       }
     }
-    return TypeMatrix(dimension, data);
+    return TypeMatrix._owned(dimension, data);
   }
 
   /// Side length of the (square) matrix — the simulation's type count.

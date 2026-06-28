@@ -42,6 +42,13 @@ void main() {
       expect(a, isNot(equals(c)));
     });
 
+    test('defensively copies the source buffer (stays immutable)', () {
+      final source = Float32List.fromList(<double>[1, 2, 3, 4]);
+      final m = TypeMatrix(2, source);
+      source[0] = 999; // mutate the caller's buffer after construction
+      expect(m.at(0, 0), 1); // matrix is unaffected
+    });
+
     test('asserts the backing store matches dimension^2', () {
       expect(
         () => TypeMatrix(2, Float32List(3)),

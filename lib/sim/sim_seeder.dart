@@ -33,6 +33,11 @@ import 'package:primordis/sim/models/type_matrix.dart';
 /// where `u()` is `Random.nextDouble()`. Matrices are row-major over
 /// `(i = my_type, j = other_type)`.
 SeededSim seedSimulation(SimSeed seed) {
+  assert(seed.typeCount > 0, 'typeCount must be positive, got ${seed.typeCount}');
+  assert(
+    seed.particleCount >= 0,
+    'particleCount must be non-negative, got ${seed.particleCount}',
+  );
   final rng = Random(seed.seed);
   final n = seed.typeCount;
   final count = seed.particleCount;

@@ -93,6 +93,13 @@ void main() {
       }
     });
 
+    test('asserts on an invalid typeCount', () {
+      expect(
+        () => seedSimulation(const SimSeed(typeCount: 0)),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
     test('forces carry both signs (mask applied)', () {
       final s = seedSimulation(const SimSeed());
       var positive = 0;
