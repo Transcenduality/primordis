@@ -3,8 +3,10 @@ description: "Primordis — a GPU particle-life simulator, as a Flutter Web + ma
 publish_to: 'none'
 
 # Versioning: 0.1.0 baseline for the Flutter rewrite (the Python reference line ended at 1.3).
+# 0.2.0 adds the shared sim core (SimBackend interface, Freezed sim models,
+# seeding, marshalling, frame loop, fake backend, providers — PRIMORDIS-TASK-002).
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ^3.11.4

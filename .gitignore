@@ -33,6 +33,11 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Generated code (Freezed / Riverpod / json_serializable). CI regenerates these
+# via `dart run build_runner build` before analyze/test, so they are not tracked.
+*.freezed.dart
+*.g.dart
+
 # Symbolication related
 app.*.symbols
 
