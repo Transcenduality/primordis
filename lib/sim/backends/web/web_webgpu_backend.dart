@@ -84,9 +84,12 @@ class WebWebGpuBackend implements SimBackend {
       );
 
   // --- Device-scoped handles (built in init, fixed for the backend's life) ---
-  GPU? _gpu;
   GPUDevice? _device;
   GPUQueue? _queue;
+  /// The device's preferred canvas format, computed once in [init] and shared by
+  /// the render pipeline's colour target and the canvas context configuration so
+  /// they can never diverge.
+  String? _canvasFormat;
   GPUBindGroupLayout? _computeLayout;
   GPUBindGroupLayout? _renderLayout;
   GPUComputePipeline? _clearPipeline;
@@ -190,6 +193,10 @@ class WebWebGpuBackend implements SimBackend {
     _clearPipeline = computePipe(KernelEntryPoints.clearBins);
     _scatterPipeline = computePipe(KernelEntryPoints.scatterBins);
     _interactPipeline = computePipe(KernelEntryPoints.interact);
+    // Compute the preferred canvas format ONCE; the same value feeds the render
+    // pipeline's colour target here and the canvas configuration in seed(), so
+    // a present() format mismatch can't arise from two independent queries.
+    final canvasFormat = gpu.getPreferredCanvasFormat();
     _renderPipeline = device.createRenderPipeline(
       GPURenderPipelineDescriptor(
         layout: renderPipelineLayout,
@@ -201,7 +208,7 @@ class WebWebGpuBackend implements SimBackend {
           module: module,
           entryPoint: KernelEntryPoints.fragmentMain,
           targets: <GPUColorTargetState>[
-            GPUColorTargetState(format: gpu.getPreferredCanvasFormat()),
+            GPUColorTargetState(format: canvasFormat),
           ].toJS,
         ),
         primitive: GPUPrimitiveState(topology: 'point-list'),
@@ -215,9 +222,9 @@ class WebWebGpuBackend implements SimBackend {
       ),
     );
 
-    _gpu = gpu;
     _device = device;
     _queue = device.queue;
+    _canvasFormat = canvasFormat;
     _computeLayout = computeLayout;
     _renderLayout = renderLayout;
   }
@@ -226,8 +233,7 @@ class WebWebGpuBackend implements SimBackend {
   Future<void> seed(SimSeed seed) async {
     final device = _device;
     final queue = _queue;
-    final gpu = _gpu;
-    if (device == null || queue == null || gpu == null) {
+    if (device == null || queue == null || _canvasFormat == null) {
       throw StateError('seed() called before init()');
     }
     final seeded = seedSimulation(seed);
@@ -279,7 +285,7 @@ class WebWebGpuBackend implements SimBackend {
       ..writeBuffer(_typeColors!, 0, buffers.typeColors.toJS);
 
     _buildBindGroups(device);
-    _ensureCanvas(device, gpu, params);
+    _ensureCanvas(device, params);
     _writeUniform(0); // a valid uniform before the first step (dt = 0).
   }
 
@@ -383,7 +389,7 @@ class WebWebGpuBackend implements SimBackend {
     _device?.destroy();
     _device = null;
     _queue = null;
-    _gpu = null;
+    _canvasFormat = null;
     _computeLayout = null;
     _renderLayout = null;
     _clearPipeline = null;
@@ -440,13 +446,24 @@ class WebWebGpuBackend implements SimBackend {
     );
   }
 
-  void _ensureCanvas(GPUDevice device, GPU gpu, SimParams params) {
-    _canvas ??= WebCanvasHandle.create(
+  void _ensureCanvas(GPUDevice device, SimParams params) {
+    if (_canvas != null) return;
+    final canvas = WebCanvasHandle.create(
       device: device,
-      gpu: gpu,
+      format: _canvasFormat!,
       width: params.worldWidth,
       height: params.worldHeight,
     );
+    if (canvas == null) {
+      // The feature-detect already reported WebGPU present, but the canvas
+      // refused a `webgpu` context — surface it as an availability failure so
+      // the selector (PRIMORDIS-TASK-007) can fall back, rather than the backend
+      // silently never presenting (a null `_canvas` no-ops `present()` forever).
+      throw const WebGpuUnavailableException(
+        'could not obtain a webgpu canvas context',
+      );
+    }
+    _canvas = canvas;
   }
 
   void _disposeSeedBuffers() {

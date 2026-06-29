@@ -28,14 +28,19 @@ class WebCanvasHandle {
   WebCanvasHandle._(this.canvas, this.context, this.format);
 
   /// Creates an off-document `<canvas>` of [width]×[height] device pixels and
-  /// configures its `webgpu` context against [device].
+  /// configures its `webgpu` context against [device] using [format].
+  ///
+  /// [format] is the device's preferred canvas format, computed once by the
+  /// backend and shared with the render pipeline's colour target so the two
+  /// cannot diverge (a mismatch would fail `present()` validation).
   ///
   /// Returns null when the `webgpu` context cannot be obtained (a browser that
-  /// exposes `navigator.gpu` yet fails to hand back a context — rare, but
-  /// handled rather than thrown so the backend can degrade gracefully).
+  /// exposes `navigator.gpu` yet fails to hand back a context — rare; the
+  /// backend turns this into an availability failure so the selector can fall
+  /// back).
   static WebCanvasHandle? create({
     required GPUDevice device,
-    required GPU gpu,
+    required String format,
     required int width,
     required int height,
   }) {
@@ -47,7 +52,6 @@ class WebCanvasHandle {
     final context = canvas.getContext('webgpu') as GPUCanvasContext?;
     if (context == null) return null;
 
-    final format = gpu.getPreferredCanvasFormat();
     context.configure(
       GPUCanvasConfiguration(
         device: device,

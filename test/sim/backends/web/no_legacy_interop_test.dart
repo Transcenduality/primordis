@@ -9,12 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 /// *our own* `lib/` source before it reaches that build — the web backend must
 /// use `dart:js_interop` + `package:web` exclusively.
 void main() {
-  test('no dart:html / dart:js_util imports anywhere under lib/', () {
+  test('no dart:html / dart:js_util import or export anywhere under lib/', () {
     final libDir = Directory('lib');
     expect(libDir.existsSync(), isTrue, reason: 'run from the package root');
 
+    // Both `import` and `export` pull a library into the dependency tree, so the
+    // guard must catch either form.
     final forbidden = RegExp(
-      r'''import\s+['"]dart:(html|js_util)['"]''',
+      r'''(?:import|export)\s+['"]dart:(html|js_util)['"]''',
     );
     final offenders = <String>[];
 
