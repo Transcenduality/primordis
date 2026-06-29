@@ -7,8 +7,11 @@ publish_to: 'none'
 # seeding, marshalling, frame loop, fake backend, providers — PRIMORDIS-TASK-002).
 # 0.3.0 adds the canonical WGSL compute kernel (clear/bin/interaction + point
 # render) and its shared accessor/buffer-layout constants — PRIMORDIS-TASK-003.
+# 0.4.0 adds the web WebGPU SimBackend (dart:js_interop + package:web): device
+# acquisition, buffer/pipeline creation, the four-pass frame + point render, and
+# the conditional-import provider wiring — PRIMORDIS-TASK-004.
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.3.0+3
+version: 0.4.0+4
 
 environment:
   sdk: ^3.11.4
