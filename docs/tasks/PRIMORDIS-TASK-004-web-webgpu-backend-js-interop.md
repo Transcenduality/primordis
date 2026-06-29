@@ -1,9 +1,9 @@
 # PRIMORDIS-TASK-004: Web WebGPU SimBackend via `dart:js_interop` + `package:web`
 
-**Status:** Todo
+**Status:** Complete
 **Priority:** Critical
 **Created:** 2026-06-27
-**Updated:** 2026-06-27
+**Updated:** 2026-06-29
 
 ## Description
 
@@ -29,24 +29,24 @@ The build target is `flutter build web --wasm` (Skwasm), which **forbids legacy 
 
 ## Acceptance Criteria
 
-- [ ] The web `SimBackend` acquires `navigator.gpu` -> `requestAdapter()` -> `requestDevice()` and fails gracefully (returns an unavailable/error state for the selector in [PRIMORDIS-TASK-007](./PRIMORDIS-TASK-007-webgpu-feature-detection-and-fallback-switch.md)) when any step is null/throws, rather than crashing the app.
-- [ ] All WebGPU access uses `dart:js_interop` `extension type`s + `package:web`; there is **no** `dart:html` and **no** `dart:js_util` anywhere in the dependency tree (verified for the `--wasm` build, [PRIMORDIS-ADR-007](../adr/PRIMORDIS-ADR-007-web-build-and-cross-origin-isolation.md)).
-- [ ] The backend creates storage buffers for particle state (SoA/AoS per `buffer_layout.dart`), the 32x32 parameter matrices, the bin-count array (`atomic<u32>` x 77), the bin-index array (capped at `MAX_BIN_PARTICLES` = 512 per bin), and a uniform buffer — all with byte layouts identical to TASK-003 so the **same** WGSL source binds correctly.
-- [ ] Three compute pipelines (clear / bin / interaction+integrate) and one point-render pipeline are created from the **shared** WGSL source string loaded via `kernel_source.dart` (TASK-003); no web-specific copy of the kernel exists.
-- [ ] Per frame the backend encodes: clear pass -> bin pass -> interaction pass (each a `GPUComputePassEncoder` with `dispatchWorkgroups(ceil(count / WORKGROUP_SIZE))`) -> point-render pass, submits one command buffer, and presents to the owned canvas; runs 24,000 particles / 32 types at 60fps on a WebGPU-capable browser.
-- [ ] The three live sliders (Attraction K, Repulsion K, Drift/friction) plus `dt` and counts are written into the uniform buffer each frame via `GPUQueue.writeBuffer` (full wiring from Riverpod state is TASK-006; this task exposes the marshalling entry point).
-- [ ] Particles render as points with per-type colour (`gl_PointSize = 2` equivalent) onto the owned `<canvas>`, configured with the alpha mode required to sit transparently under the Flutter glass-pane (compositing itself is TASK-005).
-- [ ] The backend implements the full `SimBackend` lifecycle (init / seed / step / resize / dispose), releasing all GPU resources on dispose with no leaks across hot-restart.
-- [ ] The backend is exposed only through the `SimBackend` Riverpod provider using a plain `Ref`; no `setState` is used for sim/business logic, and the UI never references WebGPU types directly (standards quarantine per [PRIMORDIS-ADR-001](../adr/PRIMORDIS-ADR-001-cross-platform-architecture-simbackend.md)).
-- [ ] Web-only code is conditionally imported so native/macOS builds compile without pulling `package:web`/WebGPU interop.
+- [x] The web `SimBackend` acquires `navigator.gpu` -> `requestAdapter()` -> `requestDevice()` and fails gracefully (returns an unavailable/error state for the selector in [PRIMORDIS-TASK-007](./PRIMORDIS-TASK-007-webgpu-feature-detection-and-fallback-switch.md)) when any step is null/throws, rather than crashing the app.
+- [x] All WebGPU access uses `dart:js_interop` `extension type`s + `package:web`; there is **no** `dart:html` and **no** `dart:js_util` anywhere in the dependency tree (verified for the `--wasm` build, [PRIMORDIS-ADR-007](../adr/PRIMORDIS-ADR-007-web-build-and-cross-origin-isolation.md)).
+- [x] The backend creates storage buffers for particle state (SoA/AoS per `buffer_layout.dart`), the 32x32 parameter matrices, the bin-count array (`atomic<u32>` x 77), the bin-index array (capped at `MAX_BIN_PARTICLES` = 512 per bin), and a uniform buffer — all with byte layouts identical to TASK-003 so the **same** WGSL source binds correctly.
+- [x] Three compute pipelines (clear / bin / interaction+integrate) and one point-render pipeline are created from the **shared** WGSL source string loaded via `kernel_source.dart` (TASK-003); no web-specific copy of the kernel exists.
+- [x] Per frame the backend encodes: clear pass -> bin pass -> interaction pass (each a `GPUComputePassEncoder` with `dispatchWorkgroups(ceil(count / WORKGROUP_SIZE))`) -> point-render pass, submits one command buffer, and presents to the owned canvas; runs 24,000 particles / 32 types at 60fps on a WebGPU-capable browser.
+- [x] The three live sliders (Attraction K, Repulsion K, Drift/friction) plus `dt` and counts are written into the uniform buffer each frame via `GPUQueue.writeBuffer` (full wiring from Riverpod state is TASK-006; this task exposes the marshalling entry point).
+- [x] Particles render as points with per-type colour (`gl_PointSize = 2` equivalent) onto the owned `<canvas>`, configured with the alpha mode required to sit transparently under the Flutter glass-pane (compositing itself is TASK-005).
+- [x] The backend implements the full `SimBackend` lifecycle (init / seed / step / resize / dispose), releasing all GPU resources on dispose with no leaks across hot-restart.
+- [x] The backend is exposed only through the `SimBackend` Riverpod provider using a plain `Ref`; no `setState` is used for sim/business logic, and the UI never references WebGPU types directly (standards quarantine per [PRIMORDIS-ADR-001](../adr/PRIMORDIS-ADR-001-cross-platform-architecture-simbackend.md)).
+- [x] Web-only code is conditionally imported so native/macOS builds compile without pulling `package:web`/WebGPU interop.
 
 ### Versioning (if Flutter/native code changed)
 
-- [ ] Version bumped in `pubspec.yaml` and the `PrimordisConfig` app config constant; semver (minor bump — web GPU backend).
+- [x] Version bumped in `pubspec.yaml` and the `PrimordisConfig` app config constant; semver (minor bump — web GPU backend).
 
 ### Test Coverage
 
-- [ ] New/modified Dart has unit/widget tests (buffer marshalling round-trips against `buffer_layout.dart`; `navigator.gpu` feature-detect branch; graceful-failure path when adapter/device is null); `flutter test` passes; `flutter analyze` zero warnings.
+- [x] New/modified Dart has unit/widget tests (buffer marshalling round-trips against `buffer_layout.dart`; `navigator.gpu` feature-detect branch; graceful-failure path when adapter/device is null); `flutter test` passes; `flutter analyze` zero warnings.
 
 ## Implementation Notes
 
@@ -62,14 +62,14 @@ The build target is `flutter build web --wasm` (Skwasm), which **forbids legacy 
 
 ## Testing
 
-- [ ] **Feature-detect unit test:** mock the absence and presence of `navigator.gpu` and assert the backend reports availability correctly and never throws on absence (feeds TASK-007).
-- [ ] **Graceful failure:** simulate `requestAdapter()`/`requestDevice()` returning null/throwing and assert the backend surfaces an error state instead of crashing.
-- [ ] **Marshalling round-trip:** pack the 32x32 matrices, colours, seed, and uniform block, then read the bytes back and assert offsets/values match `buffer_layout.dart` (TASK-003) exactly.
-- [ ] **Browser integration smoke (Chrome/Edge 113+ headless or Safari 26 / Firefox 141+/145+):** initialize the device, run several hundred frames at 24,000 particles / 32 types, and assert no exceptions, no device-lost, and a sustained ~60fps; capture frames for the parity harness ([PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)).
-- [ ] **Dispose/leak check:** init -> dispose -> re-init repeatedly (and across hot-restart) and assert GPU resources are released (no growing buffer/pipeline count).
-- [ ] **`--wasm` dep-tree guard:** assert the build contains no `dart:html` / `dart:js_util` import anywhere (CI check).
-- [ ] **Pause/static:** assert `pause()`/single-step halts the dispatch loop (reduced-motion support hand-off).
-- [ ] `flutter test` passes; `flutter analyze` reports zero warnings; `flutter build web --wasm` succeeds.
+- [x] **Feature-detect unit test:** mock the absence and presence of `navigator.gpu` and assert the backend reports availability correctly and never throws on absence (feeds TASK-007).
+- [x] **Graceful failure:** simulate `requestAdapter()`/`requestDevice()` returning null/throwing and assert the backend surfaces an error state instead of crashing.
+- [x] **Marshalling round-trip:** pack the 32x32 matrices, colours, seed, and uniform block, then read the bytes back and assert offsets/values match `buffer_layout.dart` (TASK-003) exactly.
+- [x] **Browser integration smoke (Chrome/Edge 113+ headless or Safari 26 / Firefox 141+/145+):** initialize the device, run several hundred frames at 24,000 particles / 32 types, and assert no exceptions, no device-lost, and a sustained ~60fps; capture frames for the parity harness ([PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)).
+- [x] **Dispose/leak check:** init -> dispose -> re-init repeatedly (and across hot-restart) and assert GPU resources are released (no growing buffer/pipeline count).
+- [x] **`--wasm` dep-tree guard:** assert the build contains no `dart:html` / `dart:js_util` import anywhere (CI check).
+- [x] **Pause/static:** assert `pause()`/single-step halts the dispatch loop (reduced-motion support hand-off).
+- [x] `flutter test` passes; `flutter analyze` reports zero warnings; `flutter build web --wasm` succeeds.
 
 ## Related
 

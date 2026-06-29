@@ -1,9 +1,9 @@
 # PRIMORDIS-TASK-003: Port the simulation to a single WGSL compute kernel
 
-**Status:** Todo
+**Status:** Complete
 **Priority:** Critical
 **Created:** 2026-06-27
-**Updated:** 2026-06-27
+**Updated:** 2026-06-29
 
 ## Description
 
@@ -34,24 +34,24 @@ The WGSL kernel **source** lives in the shared layer per [PRIMORDIS-ADR-001](../
 
 ## Acceptance Criteria
 
-- [ ] A single WGSL compute kernel source exists at `lib/sim/kernel/primordis.wgsl` and implements all three compute passes plus the point-render stages; there is exactly one copy of the binning and interaction logic in the codebase.
-- [ ] Pass 1 (clear) zeroes all 77 bin counters before binning each frame.
-- [ ] Pass 2 (bin) scatters all 24,000 particles into the 11x7 = 77-cell grid using `atomicAdd(&binCounts[cell], 1u)`, with the returned previous value used as the per-bin write offset; bin cell size = `MAX_RADIUS` = 96; per-bin writes are capped at `MAX_BIN_PARTICLES` = 512 and over-cap particles are dropped from the bin index exactly as the reference does (no out-of-bounds writes).
-- [ ] Pass 3 (interaction+integrate) scans the 3x3 toroidal neighbour bins, computes **minimum-image** distance on the 1080x720 torus, applies short-range repulsion for `dist < min_dist` (weighted 5x, using `abs(force)`) and linear-falloff signed attraction for `dist < radius`, then Euler-integrates (`v += f*dt; v *= friction; p += v*dt`) and wraps both axes.
-- [ ] The three 32x32 asymmetric matrices (`forces`, `min_distances`, `radii`) are indexed `[typeOf(self)][typeOf(other)]` (i->j, not symmetric) and produce the asymmetric behaviour the reference exhibits.
-- [ ] The GLSL->WGSL mapping is honoured exactly per [PRIMORDIS-ADR-003](../adr/PRIMORDIS-ADR-003-shared-wgsl-compute-kernel.md): SSBO -> `var<storage, read_write>`; `atomicAdd` -> `atomicAdd(&...)`; bin counters declared `atomic<u32>` and read **only** via `atomicLoad` (no aliased non-atomic access to atomic memory); `local_size_x` -> `@workgroup_size`; `gl_GlobalInvocationID` -> `@builtin(global_invocation_id)`.
-- [ ] All uniforms (Attraction K, Repulsion K, Drift/friction, `dt`, world dims 1080x720, grid dims 11x7, particle count 24000, type count 32) are read from a single uniform buffer whose layout is declared once in `buffer_layout.dart` and reused by both backends.
-- [ ] The kernel runs standalone (via the test harness) at 24,000 particles / 32 types and produces visually/statistically equivalent cluster formation and drift to `Primordis.py` (handed off to the parity harness in [PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)).
-- [ ] WGSL atomics rules are not violated (no mixed atomic/non-atomic access; all atomic targets `atomic<u32>`), so the source compiles cleanly under both the Naga (browser/wgpu) and Tint (Dawn) translators; any translator-specific divergence is flagged for [PRIMORDIS-TASK-017](./PRIMORDIS-TASK-017-atomics-parity-validation-dawn-vs-browser.md) rather than worked around silently.
-- [ ] The WGSL source contains no backend-specific code (no JS-interop, no FFI, no device/pipeline creation); it is pure kernel source consumable by any WebGPU runtime.
+- [x] A single WGSL compute kernel source exists at `lib/sim/kernel/primordis.wgsl` and implements all three compute passes plus the point-render stages; there is exactly one copy of the binning and interaction logic in the codebase.
+- [x] Pass 1 (clear) zeroes all 77 bin counters before binning each frame.
+- [x] Pass 2 (bin) scatters all 24,000 particles into the 11x7 = 77-cell grid using `atomicAdd(&binCounts[cell], 1u)`, with the returned previous value used as the per-bin write offset; bin cell size = `MAX_RADIUS` = 96; per-bin writes are capped at `MAX_BIN_PARTICLES` = 512 and over-cap particles are dropped from the bin index exactly as the reference does (no out-of-bounds writes).
+- [x] Pass 3 (interaction+integrate) scans the 3x3 toroidal neighbour bins, computes **minimum-image** distance on the 1080x720 torus, applies short-range repulsion for `dist < min_dist` (weighted 5x, using `abs(force)`) and linear-falloff signed attraction for `dist < radius`, then Euler-integrates (`v += f*dt; v *= friction; p += v*dt`) and wraps both axes.
+- [x] The three 32x32 asymmetric matrices (`forces`, `min_distances`, `radii`) are indexed `[typeOf(self)][typeOf(other)]` (i->j, not symmetric) and produce the asymmetric behaviour the reference exhibits.
+- [x] The GLSL->WGSL mapping is honoured exactly per [PRIMORDIS-ADR-003](../adr/PRIMORDIS-ADR-003-shared-wgsl-compute-kernel.md): SSBO -> `var<storage, read_write>`; `atomicAdd` -> `atomicAdd(&...)`; bin counters declared `atomic<u32>` and read **only** via `atomicLoad` (no aliased non-atomic access to atomic memory); `local_size_x` -> `@workgroup_size`; `gl_GlobalInvocationID` -> `@builtin(global_invocation_id)`.
+- [x] All uniforms (Attraction K, Repulsion K, Drift/friction, `dt`, world dims 1080x720, grid dims 11x7, particle count 24000, type count 32) are read from a single uniform buffer whose layout is declared once in `buffer_layout.dart` and reused by both backends.
+- [x] The kernel runs standalone (via the test harness) at 24,000 particles / 32 types and produces visually/statistically equivalent cluster formation and drift to `Primordis.py` (handed off to the parity harness in [PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)).
+- [x] WGSL atomics rules are not violated (no mixed atomic/non-atomic access; all atomic targets `atomic<u32>`), so the source compiles cleanly under both the Naga (browser/wgpu) and Tint (Dawn) translators; any translator-specific divergence is flagged for [PRIMORDIS-TASK-017](./PRIMORDIS-TASK-017-atomics-parity-validation-dawn-vs-browser.md) rather than worked around silently.
+- [x] The WGSL source contains no backend-specific code (no JS-interop, no FFI, no device/pipeline creation); it is pure kernel source consumable by any WebGPU runtime.
 
 ### Versioning (if Flutter/native code changed)
 
-- [ ] Version bumped in `pubspec.yaml` and the `PrimordisConfig` app config constant; semver (minor bump — new simulation core).
+- [x] Version bumped in `pubspec.yaml` and the `PrimordisConfig` app config constant; semver (minor bump — new simulation core).
 
 ### Test Coverage
 
-- [ ] New/modified Dart (`kernel_source.dart`, `buffer_layout.dart`, the harness glue) has unit tests; `flutter test` passes; `flutter analyze` zero warnings. (The `.wgsl` shader is validated by the standalone harness in Testing, not by Dart unit tests, since it is non-Dart source.)
+- [x] New/modified Dart (`kernel_source.dart`, `buffer_layout.dart`, the harness glue) has unit tests; `flutter test` passes; `flutter analyze` zero warnings. (The `.wgsl` shader is validated by the standalone harness in Testing, not by Dart unit tests, since it is non-Dart source.)
 
 ## Implementation Notes
 
@@ -68,15 +68,15 @@ The WGSL kernel **source** lives in the shared layer per [PRIMORDIS-ADR-001](../
 
 ## Testing
 
-- [ ] **Standalone kernel harness:** run the WGSL kernel outside Flutter against a known seed (32 types, 24,000 particles, fixed RNG seed shared with the Python reference where possible) using a headless WebGPU runtime (e.g. via the web backend's pipeline or a wgpu/Dawn CLI), stepping N frames and dumping particle positions/velocities.
-- [ ] **Binning correctness:** assert that, for a seeded frame, the sum of all 77 bin counts (clamped at 512) equals the number of binned particles, and that every binned particle's recorded cell matches a direct CPU re-computation of its cell from its position.
-- [ ] **Minimum-image / toroidal wrap:** place two particles straddling each world seam (x and y) and assert the computed displacement uses the wrapped (shorter) vector, not the naive one.
-- [ ] **Force-regime boundaries:** unit-check the three regimes (`dist < min_dist` repulsion 5x/abs; `min_dist <= dist < radius` signed linear falloff; `dist >= radius` zero) with hand-computed expected force vectors for a 2-particle, 2-type setup.
-- [ ] **Asymmetry:** verify `forces[i][j] != forces[j][i]` produces different forces on i-from-j vs j-from-i.
-- [ ] **Slider response:** sweep Attraction K, Repulsion K, Drift and assert monotonic effect on the relevant term (more attraction K -> stronger pull; more friction -> faster velocity decay).
-- [ ] **24k smoke + visual parity hand-off:** run 24,000 particles / 32 types for several hundred frames without crashes, NaNs, or out-of-bounds writes, and capture frames for the parity harness ([PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)) to compare cluster formation/drift against `Primordis.py`.
-- [ ] **Translator compile check:** confirm the source compiles under both Naga and Tint (no atomic-aliasing errors); record any divergence for [PRIMORDIS-TASK-017](./PRIMORDIS-TASK-017-atomics-parity-validation-dawn-vs-browser.md).
-- [ ] `flutter test` (Dart accessor/layout unit tests) passes; `flutter analyze` reports zero warnings.
+- [x] **Standalone kernel harness:** run the WGSL kernel outside Flutter against a known seed (32 types, 24,000 particles, fixed RNG seed shared with the Python reference where possible) using a headless WebGPU runtime (e.g. via the web backend's pipeline or a wgpu/Dawn CLI), stepping N frames and dumping particle positions/velocities.
+- [x] **Binning correctness:** assert that, for a seeded frame, the sum of all 77 bin counts (clamped at 512) equals the number of binned particles, and that every binned particle's recorded cell matches a direct CPU re-computation of its cell from its position.
+- [x] **Minimum-image / toroidal wrap:** place two particles straddling each world seam (x and y) and assert the computed displacement uses the wrapped (shorter) vector, not the naive one.
+- [x] **Force-regime boundaries:** unit-check the three regimes (`dist < min_dist` repulsion 5x/abs; `min_dist <= dist < radius` signed linear falloff; `dist >= radius` zero) with hand-computed expected force vectors for a 2-particle, 2-type setup.
+- [x] **Asymmetry:** verify `forces[i][j] != forces[j][i]` produces different forces on i-from-j vs j-from-i.
+- [x] **Slider response:** sweep Attraction K, Repulsion K, Drift and assert monotonic effect on the relevant term (more attraction K -> stronger pull; more friction -> faster velocity decay).
+- [x] **24k smoke + visual parity hand-off:** run 24,000 particles / 32 types for several hundred frames without crashes, NaNs, or out-of-bounds writes, and capture frames for the parity harness ([PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)) to compare cluster formation/drift against `Primordis.py`.
+- [x] **Translator compile check:** confirm the source compiles under both Naga and Tint (no atomic-aliasing errors); record any divergence for [PRIMORDIS-TASK-017](./PRIMORDIS-TASK-017-atomics-parity-validation-dawn-vs-browser.md).
+- [x] `flutter test` (Dart accessor/layout unit tests) passes; `flutter analyze` reports zero warnings.
 
 ## Related
 

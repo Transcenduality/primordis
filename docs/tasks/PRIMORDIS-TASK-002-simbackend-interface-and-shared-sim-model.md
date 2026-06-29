@@ -1,9 +1,9 @@
 # PRIMORDIS-TASK-002: SimBackend interface and shared sim model
 
-**Status:** Todo
+**Status:** Complete
 **Priority:** Critical
 **Created:** 2026-06-27
-**Updated:** 2026-06-27
+**Updated:** 2026-06-29
 
 ## Description
 
@@ -31,22 +31,22 @@ The models must capture the simulation exactly as the reference defines it: 24,0
 
 ## Acceptance Criteria
 
-- [ ] `SimBackend` is an abstract Dart interface exposing the lifecycle the PRD names: `init()`, `seed(SimSeed)`, `setParams(SimParams)`, `step(double dt)`, and `present()` (plus `dispose()` and a capability/particle-ceiling query). Method shapes are documented and platform-neutral — they must abstract device/pipeline creation, dispatch, parameter upload, and present across both the owned-`<canvas>` web model and the external-`Texture` macOS model **without leaking platform specifics** ([PRIMORDIS-ADR-001](../adr/PRIMORDIS-ADR-001-cross-platform-architecture-simbackend.md), [PRIMORDIS-ADR-005](../adr/PRIMORDIS-ADR-005-rendering-and-compositing.md)).
-- [ ] `SimParams` is a Freezed model holding the three **asymmetric** 32x32 float32 matrices — `forces` (signed attraction/repulsion), `minDistances`, `radii` — plus the live slider values (Attraction K, Repulsion K, Drift/friction) and the world/grid constants (world 1080x720, toroidal; grid 11x7 = 77 bins; bin size = `MAX_RADIUS = 96`; `MAX_BIN_PARTICLES = 512`; type count 32; particle count 24000). Asymmetry (`i->j != j->i`) is preserved and asserted in tests.
-- [ ] Per-type colors and type indices are Freezed-modeled; color generation is part of deterministic seeding.
-- [ ] `SimSeeder` produces particles, the three matrices, and the colors **deterministically** from a `SimSeed` (fixed RNG seed -> identical output), so parity ([PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)) and tests are reproducible. Note: this is *seed* determinism only — the GPU binning/integration itself remains nondeterministic per the PRD, so "faithful" is statistical, not bit-exact.
-- [ ] `sim_marshalling.dart` packs `SimParams` into the exact `Float32List`/`Uint32List` byte layout that backends upload, with the layout documented (field order, offsets, `std140`/`std430`-friendly alignment expectations) so TASK-004 (WebGPU uniform/SSBO) and TASK-003 (WGSL struct) consume an agreed contract. Atomic bin-count buffers are typed as `Uint32List` to match the WGSL `atomic<u32>` requirement noted in [PRIMORDIS-ADR-002](../adr/PRIMORDIS-ADR-002-web-gpu-compute-webgpu-js-interop.md) / [PRIMORDIS-ADR-003](../adr/PRIMORDIS-ADR-003-shared-wgsl-compute-kernel.md).
-- [ ] `frame_loop.dart` drives the per-frame sequence (`setParams` when sliders change -> `step(dt)` -> `present()`) decoupled from any concrete backend, and can be ticked by a test without a render surface.
-- [ ] Riverpod providers expose: current `SimParams` (with slider mutations), the active `SimBackend` handle, the `SimSeed`, and frame/run state. State is managed with plain `Ref` Riverpod — **no `setState` for business logic** (house standard).
-- [ ] `FakeSimBackend` implements `SimBackend` with no GPU (records calls / advances a trivial in-memory state) so the UI, frame loop, and providers are testable in CI without WebGPU/FFI/Metal.
-- [ ] All new models are Freezed; `dart run build_runner build` is clean.
-- [ ] Backend **selection** is *not* implemented here (that is [PRIMORDIS-TASK-007](./PRIMORDIS-TASK-007-webgpu-feature-detection-and-fallback-switch.md) / [PRIMORDIS-TASK-015](./PRIMORDIS-TASK-015-cross-platform-backend-selection-and-reduced-mode-ux.md)); this task only defines the interface and ships the fake so selection can later inject a concrete backend behind the same provider.
+- [x] `SimBackend` is an abstract Dart interface exposing the lifecycle the PRD names: `init()`, `seed(SimSeed)`, `setParams(SimParams)`, `step(double dt)`, and `present()` (plus `dispose()` and a capability/particle-ceiling query). Method shapes are documented and platform-neutral — they must abstract device/pipeline creation, dispatch, parameter upload, and present across both the owned-`<canvas>` web model and the external-`Texture` macOS model **without leaking platform specifics** ([PRIMORDIS-ADR-001](../adr/PRIMORDIS-ADR-001-cross-platform-architecture-simbackend.md), [PRIMORDIS-ADR-005](../adr/PRIMORDIS-ADR-005-rendering-and-compositing.md)).
+- [x] `SimParams` is a Freezed model holding the three **asymmetric** 32x32 float32 matrices — `forces` (signed attraction/repulsion), `minDistances`, `radii` — plus the live slider values (Attraction K, Repulsion K, Drift/friction) and the world/grid constants (world 1080x720, toroidal; grid 11x7 = 77 bins; bin size = `MAX_RADIUS = 96`; `MAX_BIN_PARTICLES = 512`; type count 32; particle count 24000). Asymmetry (`i->j != j->i`) is preserved and asserted in tests.
+- [x] Per-type colors and type indices are Freezed-modeled; color generation is part of deterministic seeding.
+- [x] `SimSeeder` produces particles, the three matrices, and the colors **deterministically** from a `SimSeed` (fixed RNG seed -> identical output), so parity ([PRIMORDIS-TASK-009](./PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md)) and tests are reproducible. Note: this is *seed* determinism only — the GPU binning/integration itself remains nondeterministic per the PRD, so "faithful" is statistical, not bit-exact.
+- [x] `sim_marshalling.dart` packs `SimParams` into the exact `Float32List`/`Uint32List` byte layout that backends upload, with the layout documented (field order, offsets, `std140`/`std430`-friendly alignment expectations) so TASK-004 (WebGPU uniform/SSBO) and TASK-003 (WGSL struct) consume an agreed contract. Atomic bin-count buffers are typed as `Uint32List` to match the WGSL `atomic<u32>` requirement noted in [PRIMORDIS-ADR-002](../adr/PRIMORDIS-ADR-002-web-gpu-compute-webgpu-js-interop.md) / [PRIMORDIS-ADR-003](../adr/PRIMORDIS-ADR-003-shared-wgsl-compute-kernel.md).
+- [x] `frame_loop.dart` drives the per-frame sequence (`setParams` when sliders change -> `step(dt)` -> `present()`) decoupled from any concrete backend, and can be ticked by a test without a render surface.
+- [x] Riverpod providers expose: current `SimParams` (with slider mutations), the active `SimBackend` handle, the `SimSeed`, and frame/run state. State is managed with plain `Ref` Riverpod — **no `setState` for business logic** (house standard).
+- [x] `FakeSimBackend` implements `SimBackend` with no GPU (records calls / advances a trivial in-memory state) so the UI, frame loop, and providers are testable in CI without WebGPU/FFI/Metal.
+- [x] All new models are Freezed; `dart run build_runner build` is clean.
+- [x] Backend **selection** is *not* implemented here (that is [PRIMORDIS-TASK-007](./PRIMORDIS-TASK-007-webgpu-feature-detection-and-fallback-switch.md) / [PRIMORDIS-TASK-015](./PRIMORDIS-TASK-015-cross-platform-backend-selection-and-reduced-mode-ux.md)); this task only defines the interface and ships the fake so selection can later inject a concrete backend behind the same provider.
 
 ### Versioning (if Flutter/native code changed)
-- [ ] Version bumped in `pubspec.yaml` and the app config constant (`PrimordisConfig.version`); semver.
+- [x] Version bumped in `pubspec.yaml` and the app config constant (`PrimordisConfig.version`); semver.
 
 ### Test Coverage
-- [ ] New/modified Dart has unit/widget tests; `flutter test` passes; `flutter analyze` zero warnings. Specifically: model construction/`copyWith`, matrix asymmetry preserved, deterministic seeding (same seed -> identical particles/matrices/colors), marshalling round-trip/layout assertions, frame-loop ordering against `FakeSimBackend`, and provider state transitions.
+- [x] New/modified Dart has unit/widget tests; `flutter test` passes; `flutter analyze` zero warnings. Specifically: model construction/`copyWith`, matrix asymmetry preserved, deterministic seeding (same seed -> identical particles/matrices/colors), marshalling round-trip/layout assertions, frame-loop ordering against `FakeSimBackend`, and provider state transitions.
 
 ## Implementation Notes
 
@@ -60,12 +60,12 @@ The models must capture the simulation exactly as the reference defines it: 24,0
 - **Accessibility forward-hook.** The frame loop must be pausable (a paused/static state) so the reduced-motion obligation in [PRIMORDIS-ADR-006](../adr/PRIMORDIS-ADR-006-cpu-fallback-tiers-and-feature-detection.md) can be honored by [PRIMORDIS-TASK-015](./PRIMORDIS-TASK-015-cross-platform-backend-selection-and-reduced-mode-ux.md) / [PRIMORDIS-TASK-018](./PRIMORDIS-TASK-018-test-coverage-and-accessibility.md) — expose a pause flag in run state now.
 
 ## Testing
-- [ ] Unit: `SimParams`/`ParticleType`/`SimSeed` construction, equality, `copyWith`; matrix asymmetry assertion (`forces[i][j] != forces[j][i]` for representative pairs).
-- [ ] Unit: `SimSeeder` determinism — identical `SimSeed` yields byte-identical particles, matrices, and colors across two runs.
-- [ ] Unit: marshalling layout — packed `Float32List`/`Uint32List` has the documented offsets/length for 32 types and 24k particles; bin-count buffer typed `Uint32List`; round-trip where applicable.
-- [ ] Unit: `frame_loop` invokes `setParams` only on param change, then `step(dt)` then `present()` each tick, in order, against `FakeSimBackend`; pause flag suppresses stepping.
-- [ ] Unit: Riverpod providers — slider mutation updates `SimParams`; backend provider returns the injected (fake) backend; run-state transitions (running/paused).
-- [ ] `dart run build_runner build --delete-conflicting-outputs` is clean; `flutter analyze` zero warnings; `flutter test` passes.
+- [x] Unit: `SimParams`/`ParticleType`/`SimSeed` construction, equality, `copyWith`; matrix asymmetry assertion (`forces[i][j] != forces[j][i]` for representative pairs).
+- [x] Unit: `SimSeeder` determinism — identical `SimSeed` yields byte-identical particles, matrices, and colors across two runs.
+- [x] Unit: marshalling layout — packed `Float32List`/`Uint32List` has the documented offsets/length for 32 types and 24k particles; bin-count buffer typed `Uint32List`; round-trip where applicable.
+- [x] Unit: `frame_loop` invokes `setParams` only on param change, then `step(dt)` then `present()` each tick, in order, against `FakeSimBackend`; pause flag suppresses stepping.
+- [x] Unit: Riverpod providers — slider mutation updates `SimParams`; backend provider returns the injected (fake) backend; run-state transitions (running/paused).
+- [x] `dart run build_runner build --delete-conflicting-outputs` is clean; `flutter analyze` zero warnings; `flutter test` passes.
 
 ## Related
 - PRD: [PRIMORDIS-PRD-001](../prd/PRIMORDIS-PRD-001-flutter-web-and-macos-port.md)
