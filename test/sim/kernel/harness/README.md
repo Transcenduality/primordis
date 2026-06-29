@@ -66,6 +66,31 @@ const sim = createSim(device, env, worldParams({ numParticles: 24000, typeCount:
 sim.step(300)
 ```
 
+## Render path (PRIMORDIS-TASK-004)
+
+`render.mjs` (`npm run render`) validates the point-RENDER pipeline the web
+WebGPU backend adds on top of the three compute passes — built from the same
+shared kernel (`vs_main` / `fs_main`, group 1 read-only views), mirroring
+`lib/sim/backends/web/web_webgpu_backend.dart`.
+
+What it checks under Dawn/Tint:
+
+- **Render pipeline + group-1 bind group compile** from the shared kernel with no
+  validation error (the vertex/fragment stages are valid, the group-1 layout /
+  `point-list` topology / colour-target format are accepted).
+- **Combined compute loop** (clear → bin → interact) runs clean alongside the
+  render pipeline.
+
+**Environment limit:** `@kmamal/gpu` 0.2.x bundles a Dawn that gates every
+`createView` behind the `allow_unsafe_apis` toggle (a "swizzle … feature not
+enabled" error), which the binding doesn't expose. A render *pass* needs a
+colour-attachment view, so the actual point draw + pixel readback **cannot be
+executed in Node here** — the harness logs a `SKIP` for it. That draw/present
+path is exercised by the Flutter `--wasm` web build and in a real WebGPU browser
+(the Naga path), which is the venue the task's browser integration smoke targets.
+When run under a Dawn build with working views (or a browser), `render.mjs`
+automatically runs the draw + lit-pixel assertions instead of skipping.
+
 ## Notes
 
 - Determinism is not a goal: the atomic scatter is intentionally racy and the
