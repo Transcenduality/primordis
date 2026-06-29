@@ -1,53 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:primordis/shared/constants/primordis_config.dart';
+import 'package:primordis/features/simulation/widgets/simulation_view.dart';
 
-/// The home screen.
+/// The home screen: the full-bleed simulation surface.
 ///
-/// The simulation surface composites into the reserved area below — on web a
-/// stacked WebGPU `<canvas>` behind a transparent Flutter glass-pane
-/// (PRIMORDIS-TASK-005), on macOS an IOSurface-backed `Texture`
-/// (PRIMORDIS-TASK-012). The scaffold introduces no continuous motion, so it
-/// stays reduced-motion safe (PRIMORDIS-ADR-006).
+/// The [Scaffold] is **transparent** so the simulation composites through the
+/// glass-pane — on web a stacked WebGPU `<canvas>` behind a transparent Flutter
+/// view (PRIMORDIS-TASK-005), on macOS an IOSurface-backed `Texture`
+/// (PRIMORDIS-TASK-012). The simulation is full-screen motion with the chrome
+/// (and sliders, PRIMORDIS-TASK-006) overlaid by [SimulationView]; pausing the
+/// frame loop holds the last composited frame (PRIMORDIS-ADR-006).
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Primordis', style: theme.textTheme.headlineMedium),
-              const SizedBox(height: 8),
-              Text(
-                'GPU particle-life — Flutter Web + macOS',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 24),
-              Container(
-                width: 360,
-                height: 220,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.outline),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'simulation surface\n(backend lands in TASK-004 / TASK-012)',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text('v${PrimordisConfig.version}',
-                  style: theme.textTheme.labelSmall),
-            ],
-          ),
-        ),
-      ),
+    return const Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SimulationView(),
     );
   }
 }
