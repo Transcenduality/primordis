@@ -52,9 +52,13 @@ async function main() {
     check('no uncaptured device error', false, e.error?.message ?? 'error'))
 
   try {
+    // Load the WGSL once (async: disk on Node, fetch in a browser); every
+    // createSim() below reuses the memoised source synchronously.
+    const code = await loadKernelSource()
+
     // --- Translator compile check (Tint, via Dawn) -------------------------
     console.log('\n[compile] Tint (Dawn) shader-module validation')
-    const mod = device.createShaderModule({ code: loadKernelSource() })
+    const mod = device.createShaderModule({ code })
     const info = await mod.getCompilationInfo()
     const errors = info.messages.filter((m) => m.type === 'error')
     for (const m of info.messages) console.log(`    [${m.type}] ${m.message}`)

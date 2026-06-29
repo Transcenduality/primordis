@@ -3,28 +3,33 @@
 // Loads the canonical kernel (../../../../lib/sim/kernel/primordis.wgsl) into a
 // real WebGPU runtime and drives the three compute passes, so the *shader's
 // behaviour* can be validated outside Flutter (the .wgsl is non-Dart and so is
-// not covered by `flutter test`). It runs in two environments unchanged:
+// not covered by `flutter test`).
 //
-//   • Node.js  — via `@kmamal/gpu` (Dawn/Tint), used by `run.mjs` here.
-//   • a browser — via `navigator.gpu` (the same WGSL the web backend will use).
+// This module is environment-agnostic plumbing (device + buffers + dispatch +
+// readback). It has NO static `node:*` imports: it picks the WebGPU runtime and
+// the source-loading strategy at runtime, so it imports unchanged in both
 //
-// This module is pure plumbing (device + buffers + dispatch + readback); the
-// assertions live in `run.mjs`. The bind-group/binding layout mirrors
-// `kernel_source.dart` (compute group 0).
+//   • Node.js  — `@kmamal/gpu` (Dawn/Tint); source read from disk, and
+//   • a browser — `navigator.gpu`; source fetched over HTTP (the Naga path).
+//
+// `run.mjs` is the Node CLI that drives this module and holds the assertions.
+// The bind-group/binding layout mirrors `kernel_source.dart` (compute group 0).
 
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
-
-const HERE = dirname(fileURLToPath(import.meta.url))
-export const KERNEL_PATH = join(HERE, '../../../../lib/sim/kernel/primordis.wgsl')
+/** Canonical location of the kernel, resolved relative to this module. */
+export const KERNEL_URL = new URL(
+  '../../../../lib/sim/kernel/primordis.wgsl',
+  import.meta.url,
+)
 
 export const WORKGROUP_SIZE = 256
 export const MAX_BIN_PARTICLES = 512
 
+/** True when running under Node.js (vs a browser). */
+const isNode = typeof process !== 'undefined' && !!process.versions?.node
+
 /** Resolve a WebGPU adapter source + the usage-flag enums for the host env. */
 export async function getEnv() {
-  if (typeof navigator !== 'undefined' && navigator.gpu) {
+  if (!isNode) {
     return {
       source: navigator.gpu,
       BufferUsage: globalThis.GPUBufferUsage,
@@ -42,8 +47,29 @@ export async function getEnv() {
   }
 }
 
-export function loadKernelSource() {
-  return readFileSync(KERNEL_PATH, 'utf8')
+let _kernelCode = null
+
+/**
+ * Load the WGSL source (memoised). On Node it reads the file from disk; in a
+ * browser it fetches `KERNEL_URL` over HTTP. Await this once before [createSim].
+ */
+export async function loadKernelSource() {
+  if (_kernelCode != null) return _kernelCode
+  if (isNode) {
+    const { readFile } = await import('node:fs/promises')
+    _kernelCode = await readFile(KERNEL_URL, 'utf8')
+  } else {
+    _kernelCode = await (await fetch(KERNEL_URL)).text()
+  }
+  return _kernelCode
+}
+
+/** The already-loaded source. Throws if [loadKernelSource] hasn't run yet. */
+export function kernelCode() {
+  if (_kernelCode == null) {
+    throw new Error('call loadKernelSource() before createSim()')
+  }
+  return _kernelCode
 }
 
 /** Pack the 64-byte uniform block, matching SimMarshalling's slot order. */
@@ -77,8 +103,7 @@ const ceilDiv = (a, b) => Math.floor((a + b - 1) / b)
  */
 export function createSim(device, env, params, initial) {
   const BU = env.BufferUsage
-  const code = loadKernelSource()
-  const module = device.createShaderModule({ code })
+  const module = device.createShaderModule({ code: kernelCode() })
 
   const storage = (data) => {
     const b = device.createBuffer({

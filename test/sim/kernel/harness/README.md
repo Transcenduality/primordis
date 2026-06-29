@@ -46,10 +46,25 @@ dependency of the Flutter app (`node_modules/` is gitignored here).
 
 ### Browser (Naga path / the web backend's runtime)
 
-`harness.mjs` already prefers `navigator.gpu` when present, so the same modules
-run in a WebGPU-capable browser (import `run.mjs` from a page served over a
-secure context). This is the cheapest way to sanity-check the Naga translator
-ahead of the formal Tint-vs-Naga parity work in PRIMORDIS-TASK-017.
+`harness.mjs` is environment-agnostic: it has no `node:*` imports, selects
+`navigator.gpu` when not on Node, and fetches the WGSL over HTTP. So the same
+buffer/dispatch plumbing can be reused in a WebGPU-capable browser to sanity-
+check the **Naga** translator ahead of the formal Tint-vs-Naga parity work in
+PRIMORDIS-TASK-017.
+
+`run.mjs` itself is the **Node CLI** (it uses `process` for argv/exit), so a
+browser run means a tiny page that imports `harness.mjs` and calls
+`loadKernelSource()` + `createSim()` — not loading `run.mjs` directly. Serve the
+repo over a secure context so `fetch(KERNEL_URL)` can read the asset, e.g.:
+
+```js
+import { getEnv, loadKernelSource, createSim, worldParams } from './harness.mjs'
+await loadKernelSource()
+const env = await getEnv()
+const device = await (await env.source.requestAdapter()).requestDevice()
+const sim = createSim(device, env, worldParams({ numParticles: 24000, typeCount: 32 }), initialBuffers)
+sim.step(300)
+```
 
 ## Notes
 
