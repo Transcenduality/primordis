@@ -1,9 +1,11 @@
 # PRIMORDIS-TASK-005: Web canvas compositing and pointer routing
 
-**Status:** Todo
+**Status:** Complete
 **Priority:** High
 **Created:** 2026-06-27
-**Updated:** 2026-06-27
+**Updated:** 2026-07-01
+
+> **Delivered via [PR #6](https://github.com/babernethy/primordis/pull/6)** — merged 2026-07-01 (merge commit `83a2b46`). Retained here as a historical file alongside TASK-001..004. Pending work (TASK-006 onward) now lives in the `dgroup-standards` MCP server under the `PRIMORDIS_WEB` scope.
 
 ## Description
 
@@ -28,23 +30,23 @@ Note (house standards): the `<canvas>` ownership, DOM stacking, `dart:js_interop
 
 ## Acceptance Criteria
 
-- [ ] The WebGPU `<canvas>` is created/attached as a **sibling DOM element positioned behind** the Flutter view; it is **NOT** wrapped in `HtmlElementView` (no platform-view/overlay/canvas-splitting path).
-- [ ] The Flutter view is configured as a **transparent glass-pane**: the simulation shows through all background/empty regions while the sliders and chrome render normally on top.
-- [ ] All DOM/canvas/pointer interop uses **`dart:js_interop` + `package:web` only**; no `dart:html` and no `dart:js_util` are introduced anywhere reachable from the dependency tree (required by the `--wasm` build, see [PRIMORDIS-ADR-007](../adr/PRIMORDIS-ADR-007-web-build-and-cross-origin-isolation.md)).
-- [ ] **Pointer routing is explicit:** gestures over the slider/chrome region reach Flutter widgets; pointer interaction over the open field reaches the simulation/backend; no events are lost or double-handled at the seam.
-- [ ] The canvas backing store is sized to `logicalSize * MediaQuery.devicePixelRatio`, and **re-applied on every resize** (including DPR change, e.g. dragging a window between displays); the point field stays sharp and aligned with the Flutter overlay.
-- [ ] On resize, the canvas backing store, the WebGPU surface configuration, and the Flutter glass-pane bounds stay in lockstep with no visible tearing, gap, or misalignment between the simulation and the overlay.
-- [ ] The 1080×720 toroidal world maps correctly into the displayed canvas region (aspect/letterboxing behavior is defined and consistent across densities).
-- [ ] Reduced-motion: when the frame loop is paused (accessibility pause / `prefers-reduced-motion`), the last composited frame is held and the overlay remains fully interactive (pause owned by [PRIMORDIS-TASK-006](./PRIMORDIS-TASK-006-sliders-to-uniforms-and-ui-chrome.md) / [PRIMORDIS-ADR-006](../adr/PRIMORDIS-ADR-006-cpu-fallback-tiers-and-feature-detection.md); this task must not break holding the last frame).
-- [ ] No `setState`-driven business logic: compositor/canvas state that the UI observes is exposed via Riverpod providers with a plain `Ref`.
+- [x] The WebGPU `<canvas>` is created/attached as a **sibling DOM element positioned behind** the Flutter view; it is **NOT** wrapped in `HtmlElementView` (no platform-view/overlay/canvas-splitting path).
+- [x] The Flutter view is configured as a **transparent glass-pane**: the simulation shows through all background/empty regions while the sliders and chrome render normally on top.
+- [x] All DOM/canvas/pointer interop uses **`dart:js_interop` + `package:web` only**; no `dart:html` and no `dart:js_util` are introduced anywhere reachable from the dependency tree (required by the `--wasm` build, see [PRIMORDIS-ADR-007](../adr/PRIMORDIS-ADR-007-web-build-and-cross-origin-isolation.md)).
+- [x] **Pointer routing is explicit:** gestures over the slider/chrome region reach Flutter widgets; pointer interaction over the open field reaches the simulation/backend; no events are lost or double-handled at the seam.
+- [x] The canvas backing store is sized to `logicalSize * MediaQuery.devicePixelRatio`, and **re-applied on every resize** (including DPR change, e.g. dragging a window between displays); the point field stays sharp and aligned with the Flutter overlay.
+- [x] On resize, the canvas backing store, the WebGPU surface configuration, and the Flutter glass-pane bounds stay in lockstep with no visible tearing, gap, or misalignment between the simulation and the overlay.
+- [x] The 1080×720 toroidal world maps correctly into the displayed canvas region (aspect/letterboxing behavior is defined and consistent across densities).
+- [x] Reduced-motion: when the frame loop is paused (accessibility pause / `prefers-reduced-motion`), the last composited frame is held and the overlay remains fully interactive (pause owned by [PRIMORDIS-TASK-006](./PRIMORDIS-TASK-006-sliders-to-uniforms-and-ui-chrome.md) / [PRIMORDIS-ADR-006](../adr/PRIMORDIS-ADR-006-cpu-fallback-tiers-and-feature-detection.md); this task must not break holding the last frame).
+- [x] No `setState`-driven business logic: compositor/canvas state that the UI observes is exposed via Riverpod providers with a plain `Ref`.
 
 ### Versioning (if Flutter/native code changed)
 
-- [ ] Version bumped in `pubspec.yaml` and the app config constant (`PrimordisConfig`/`AppConfig`); semver.
+- [x] Version bumped in `pubspec.yaml` and the app config constant (`PrimordisConfig`/`AppConfig`); semver.
 
 ### Test Coverage
 
-- [ ] New/modified Dart has unit/widget tests; `flutter test` passes; `flutter analyze` zero warnings.
+- [x] New/modified Dart has unit/widget tests; `flutter test` passes; `flutter analyze` zero warnings.
 
 ## Implementation Notes
 
@@ -59,14 +61,14 @@ Note (house standards): the `<canvas>` ownership, DOM stacking, `dart:js_interop
 
 ## Testing
 
-- [ ] Widget test: `SimulationView` renders the transparent glass-pane and overlays slider/chrome widgets; background is transparent (no opaque paint over the sibling-canvas region).
-- [ ] Unit test (`web_pointer_router`): given pointer positions in the control region vs. the field region, the router dispatches to the Flutter target vs. the backend target respectively, with no double-dispatch.
-- [ ] Manual/integration on **Chrome/Edge 113+** and **Safari 26 / Firefox 145+ (Apple-Silicon)**: simulation renders behind the controls; sliders are draggable; field interaction reaches the backend.
-- [ ] DPR test: load at `devicePixelRatio` 1, 2, and 3 (or drag the window between a non-Retina and Retina display); confirm the point field is crisp and aligned with the overlay at each density, and re-aligns after the move.
-- [ ] Resize test: continuously resize the window; confirm no tearing/gaps and that the canvas + glass-pane converge to the final size without leftover misalignment.
-- [ ] `--wasm` build sanity: confirm no `dart:html` / `dart:js_util` appears in the dependency tree (build does not fall back to legacy interop); verify the same behavior under the CanvasKit/dart2js fallback renderer.
-- [ ] Reduced-motion: pause the loop and confirm the last frame holds while the overlay stays interactive.
-- [ ] `flutter analyze` reports zero warnings; `flutter test` passes.
+- [x] Widget test: `SimulationView` renders the transparent glass-pane and overlays slider/chrome widgets; background is transparent (no opaque paint over the sibling-canvas region).
+- [x] Unit test (`web_pointer_router`): given pointer positions in the control region vs. the field region, the router dispatches to the Flutter target vs. the backend target respectively, with no double-dispatch.
+- [x] Manual/integration on **Chrome/Edge 113+** and **Safari 26 / Firefox 145+ (Apple-Silicon)**: simulation renders behind the controls; sliders are draggable; field interaction reaches the backend.
+- [x] DPR test: load at `devicePixelRatio` 1, 2, and 3 (or drag the window between a non-Retina and Retina display); confirm the point field is crisp and aligned with the overlay at each density, and re-aligns after the move.
+- [x] Resize test: continuously resize the window; confirm no tearing/gaps and that the canvas + glass-pane converge to the final size without leftover misalignment.
+- [x] `--wasm` build sanity: confirm no `dart:html` / `dart:js_util` appears in the dependency tree (build does not fall back to legacy interop); verify the same behavior under the CanvasKit/dart2js fallback renderer.
+- [x] Reduced-motion: pause the loop and confirm the last frame holds while the overlay stays interactive.
+- [x] `flutter analyze` reports zero warnings; `flutter test` passes.
 
 ## Related
 

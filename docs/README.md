@@ -6,9 +6,13 @@ a single Python file `../Primordis.py` built on pygame + moderngl + numpy) to a
 single **Flutter** app that runs on **Flutter Web (WASM)** and **native Flutter macOS**.
 
 These documents follow the DGROUP house format (PRD / ADR / task templates from the
-`dgroup-standards` MCP server). Primordis is its own standalone repo and is not yet a
-project in the MCP server, so the documents are committed here as files. They use the
-local scope prefix `PRIMORDIS` and local numbering from `001`.
+`dgroup-standards` MCP server). Primordis is registered in that server as the
+**`PRIMORDIS`** product with a **`PRIMORDIS_WEB`** project scope. **Pending tasks
+(TASK-006 onward) now live in the MCP server** under `PRIMORDIS_WEB`; the PRD, ADRs,
+research, and the completed early tasks (TASK-001..005) remain here as files. They use the
+local scope prefix `PRIMORDIS` and local numbering from `001`; tasks migrated to the server
+keep their original `PRIMORDIS-TASK-0NN` id in the record body for traceability (the server
+assigns its own global task numbers, #796–808).
 
 ## Start here
 
@@ -58,30 +62,37 @@ Status: all **Proposed** (2026-06-27).
 
 ## Tasks
 
-Status: all **Todo**. Suggested execution order follows the phases in the PRD. Each
-task file has full acceptance criteria, implementation notes, testing steps, and
-dependency links.
+**Completed — retained here as historical files:**
 
-| Phase | Task | Pri | Depends on |
-| --- | --- | --- | --- |
-| Web 0 | [TASK-001 Project scaffold & build config](tasks/PRIMORDIS-TASK-001-project-scaffold-and-build-config.md) | High | — |
-| Web 0 | [TASK-002 SimBackend interface & shared sim model](tasks/PRIMORDIS-TASK-002-simbackend-interface-and-shared-sim-model.md) | High | 001 |
-| Web 1 | [TASK-003 Port simulation to WGSL compute kernel](tasks/PRIMORDIS-TASK-003-port-simulation-to-wgsl-compute-kernel.md) | Critical | 002 |
-| Web 2 | [TASK-004 Web WebGPU backend (js_interop)](tasks/PRIMORDIS-TASK-004-web-webgpu-backend-js-interop.md) | Critical | 003 |
-| Web 2 | [TASK-005 Web canvas compositing & pointer routing](tasks/PRIMORDIS-TASK-005-web-canvas-compositing-and-pointer-routing.md) | High | 004 |
-| Web 2 | [TASK-006 Sliders → uniforms & UI chrome](tasks/PRIMORDIS-TASK-006-sliders-to-uniforms-and-ui-chrome.md) | High | 002, 004 |
-| Web 3 | [TASK-008 Dart-WASM CPU fallback backend](tasks/PRIMORDIS-TASK-008-dart-wasm-cpu-fallback-backend.md) | High | 002 |
-| Web 3 | [TASK-007 WebGPU feature detection & fallback switch](tasks/PRIMORDIS-TASK-007-webgpu-feature-detection-and-fallback-switch.md) | High | 004, 008 |
-| Web 3 | [TASK-010 Web build, hosting & cross-origin isolation](tasks/PRIMORDIS-TASK-010-web-build-hosting-and-cross-origin-isolation.md) | Medium | 005 |
-| Web 4 | [TASK-009 Parity test harness vs Python reference](tasks/PRIMORDIS-TASK-009-parity-test-harness-vs-python-reference.md) | High | 003, 008 |
-| Web 4 | [TASK-018 Test coverage & accessibility](tasks/PRIMORDIS-TASK-018-test-coverage-and-accessibility.md) | High | 006, 008 |
-| macOS M1 | [TASK-011 macOS target — Dawn/wgpu FFI backend](tasks/PRIMORDIS-TASK-011-macos-target-dawn-wgpu-ffi-backend.md) | High | 003, 004 |
-| macOS M1 | [TASK-017 Atomics parity validation — Dawn vs browser](tasks/PRIMORDIS-TASK-017-atomics-parity-validation-dawn-vs-browser.md) | High | 011 |
-| macOS M2 | [TASK-012 macOS Metal texture present path](tasks/PRIMORDIS-TASK-012-macos-metal-texture-present-path.md) | High | 011 |
-| macOS M3 | [TASK-014 Native CPU isolate fallback backend](tasks/PRIMORDIS-TASK-014-native-cpu-isolate-fallback-backend.md) | Medium | 002, 008 |
-| macOS M3 | [TASK-015 Cross-platform backend selection & reduced-mode UX](tasks/PRIMORDIS-TASK-015-cross-platform-backend-selection-and-reduced-mode-ux.md) | High | 007, 011, 014 |
-| macOS M4 | [TASK-016 macOS packaging, signing & GPU gating](tasks/PRIMORDIS-TASK-016-macos-packaging-signing-and-gpu-gating.md) | Medium | 012 |
-| Fallback | [TASK-013 macOS Metal (MSL) compute plugin (de-risking)](tasks/PRIMORDIS-TASK-013-macos-metal-msl-compute-plugin-fallback.md) | Medium | 011 |
+| Task | Status |
+| --- | --- |
+| [TASK-001 Project scaffold & build config](tasks/PRIMORDIS-TASK-001-project-scaffold-and-build-config.md) | Complete |
+| [TASK-002 SimBackend interface & shared sim model](tasks/PRIMORDIS-TASK-002-simbackend-interface-and-shared-sim-model.md) | Complete |
+| [TASK-003 Port simulation to WGSL compute kernel](tasks/PRIMORDIS-TASK-003-port-simulation-to-wgsl-compute-kernel.md) | Complete |
+| [TASK-004 Web WebGPU backend (js_interop)](tasks/PRIMORDIS-TASK-004-web-webgpu-backend-js-interop.md) | Complete |
+| [TASK-005 Web canvas compositing & pointer routing](tasks/PRIMORDIS-TASK-005-web-canvas-compositing-and-pointer-routing.md) | Complete (PR #6) |
+
+**Pending — now in the `dgroup-standards` MCP server, scope `PRIMORDIS_WEB`.** Fetch with
+`list_tasks(scope: "PRIMORDIS_WEB")` or `get_task_context(<MCP#>)`. Each record has full
+acceptance criteria, implementation notes, testing steps, and dependency links, and keeps its
+original `PRIMORDIS-TASK-0NN` id in the body. Suggested execution order follows the PRD phases.
+The **Depends on** column uses the original task numbering.
+
+| Phase | Orig | MCP# | Task | Pri | Depends on |
+| --- | --- | --- | --- | --- | --- |
+| Web 2 | 006 | 796 | Sliders → uniforms & UI chrome | High | 002, 004 |
+| Web 3 | 008 | 798 | Dart→WASM CPU fallback backend | High | 002 |
+| Web 3 | 007 | 797 | WebGPU feature detection & fallback switch | High | 004, 008 |
+| Web 3 | 010 | 800 | Web build, hosting & cross-origin isolation | High | 005 |
+| Web 4 | 009 | 799 | Parity test harness vs Python reference | Medium | 003, 008 |
+| Web 4 | 018 | 808 | Test coverage & accessibility | High | 006, 008 |
+| macOS M1 | 011 | 801 | macOS target — Dawn/wgpu FFI backend | High | 003, 004 |
+| macOS M1 | 017 | 807 | Atomics parity validation — Dawn vs browser | High | 011 |
+| macOS M2 | 012 | 802 | macOS Metal texture present path | High | 011 |
+| macOS M3 | 014 | 804 | Native CPU isolate fallback backend | Medium | 002, 008 |
+| macOS M3 | 015 | 805 | Cross-platform backend selection & reduced-mode UX | High | 007, 011, 014 |
+| macOS M4 | 016 | 806 | macOS packaging, signing & GPU gating | Medium | 012 |
+| Fallback | 013 | 803 | macOS Metal (MSL) compute plugin (de-risking) | Medium | 011 |
 
 ## Effort (from research)
 
@@ -105,5 +116,7 @@ before committing to the full kernel port in **[TASK-003](tasks/PRIMORDIS-TASK-0
 - **Scope prefix:** `PRIMORDIS`. **Numbering:** local, from `001`.
 - **Statuses:** PRD `Draft` · ADRs `Proposed` · tasks `Todo`. Update in place as work
   proceeds (e.g. ADRs → `Accepted` once ratified, tasks → `In Progress`/`Done`).
-- If/when a Primordis project is added to the `dgroup-standards` MCP server, these
-  files can be imported as the seed content with their existing numbering.
+- The Primordis scopes (`PRIMORDIS` product / `PRIMORDIS_WEB` project) now exist in the
+  `dgroup-standards` MCP server. **Pending tasks live there** (scope `PRIMORDIS_WEB`); the
+  PRD, ADRs, research, and the completed tasks (001–005) remain as files here. Create new
+  pending work in the server via `create_task(..., scope: "PRIMORDIS_WEB")`, not as new files.
