@@ -31,6 +31,45 @@
 
   <title>Primordis</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    Compositing / stacking context (PRIMORDIS-ADR-005 / PRIMORDIS-TASK-005).
+
+    The simulation runs on a sibling <canvas id="primordis-gpu-canvas"> the app
+    owns and injects from Dart (web_canvas_compositor.dart) — NOT an
+    HtmlElementView. It is positioned BEHIND Flutter's view; Flutter renders as a
+    transparent glass-pane so the simulation shows through every empty/background
+    region while the controls overlay on top.
+
+    - body background is black so letterbox margins (the contain-fit bars around
+      the 1080x720 world) read as the simulation's near-black field, not white.
+    - the GPU canvas sits at z-index 0; the Flutter host is lifted above it and
+      made transparent so it composites over the canvas rather than hiding it.
+  -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+    /* The Dart compositor also sets these inline; declared here so the canvas is
+       correctly stacked/non-interactive even for the first frame before sync. */
+    #primordis-gpu-canvas {
+      position: fixed;
+      z-index: 0;
+      pointer-events: none;
+      display: block;
+    }
+    /* Lift the Flutter view above the GPU canvas and keep its background clear so
+       the glass-pane composites over the simulation. */
+    flutter-view, flt-glass-pane {
+      position: relative;
+      z-index: 1;
+      background: transparent;
+    }
+  </style>
 </head>
 <body>
   <!--

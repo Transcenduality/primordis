@@ -6,7 +6,7 @@
 /// named constants here let the scaffold and config compile before that lands.
 abstract final class PrimordisConfig {
   /// App version. Keep in sync with `pubspec.yaml` `version:`.
-  static const String version = '0.4.0';
+  static const String version = '0.5.0';
 
   // --- Simulation constants (reference: Primordis.py) ---
 

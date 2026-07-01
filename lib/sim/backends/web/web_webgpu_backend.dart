@@ -32,6 +32,7 @@ import 'package:primordis/sim/models/sim_seed.dart';
 import 'package:primordis/sim/sim_backend.dart';
 import 'package:primordis/sim/sim_marshalling.dart';
 import 'package:primordis/sim/sim_seeder.dart';
+import 'package:web/web.dart' as web;
 
 /// Thrown by [WebWebGpuBackend.init] when device acquisition fails after the
 /// feature-detect said WebGPU was present (adapter/device became null or the
@@ -122,8 +123,26 @@ class WebWebGpuBackend implements SimBackend {
   /// True once [seed] has built the buffers/bind groups and the sim can step.
   bool get isSeeded => _computeBindGroup != null;
 
-  /// The owned canvas element, for TASK-005 to stack/size (null before [seed]).
-  Object? get canvasElement => _canvas?.canvas;
+  /// The owned canvas element, for the compositor (TASK-005) to stack/size
+  /// (null before [seed]). Web-typed so the compositor needs no JS-interop
+  /// runtime check; both live below the seam ([PRIMORDIS-ADR-001]).
+  web.HTMLCanvasElement? get canvasElement => _canvas?.canvas;
+
+  /// Resizes the owned canvas backing store to [width]×[height] device pixels
+  /// and reconfigures its WebGPU context (the present surface follows the
+  /// glass-pane region × `devicePixelRatio`, [PRIMORDIS-TASK-005]).
+  ///
+  /// No-op before [seed] (no canvas), after device loss, or for a non-positive
+  /// size — so the compositor can call it unconditionally on every layout change.
+  /// The backend stays the sole owner of the GPU device/canvas; the compositor
+  /// reaches the surface only through this hook ([PRIMORDIS-ADR-001]).
+  void resizeCanvas({required int width, required int height}) {
+    final device = _device;
+    final canvas = _canvas;
+    if (device == null || canvas == null || _deviceLost) return;
+    if (width <= 0 || height <= 0) return;
+    canvas.resize(device: device, width: width, height: height);
+  }
 
   @override
   Future<void> init() async {

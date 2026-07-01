@@ -10,8 +10,11 @@ publish_to: 'none'
 # 0.4.0 adds the web WebGPU SimBackend (dart:js_interop + package:web): device
 # acquisition, buffer/pipeline creation, the four-pass frame + point render, and
 # the conditional-import provider wiring — PRIMORDIS-TASK-004.
+# 0.5.0 adds web canvas compositing + pointer routing: the sibling WebGPU canvas
+# stacked behind a transparent Flutter glass-pane, DPR/resize sync, and the
+# explicit field/control pointer seam — PRIMORDIS-TASK-005.
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.4.0+4
+version: 0.5.0+5
 
 environment:
   sdk: ^3.11.4
