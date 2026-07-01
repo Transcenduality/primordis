@@ -37,8 +37,9 @@ class PointerRouting {
 
   final PointerRoute route;
 
-  /// The world-space position (`0..worldWidth`, `0..worldHeight`) for a field
-  /// route; null for a Flutter route.
+  /// The world-space position (`0 <= x < worldWidth`, `0 <= y < worldHeight`;
+  /// half-open at the max edges, matching [WorldViewport.worldFromRegionLocal])
+  /// for a field route; null for a Flutter route.
   final Offset? world;
 
   @override

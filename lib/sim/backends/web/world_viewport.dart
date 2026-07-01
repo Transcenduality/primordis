@@ -94,7 +94,9 @@ class WorldViewport {
       math.max(1, (fieldHeight * devicePixelRatio).round());
 
   /// Maps a region-local pointer position to world coordinates
-  /// (`0..worldWidth`, `0..worldHeight`), or null when the point lies in a
+  /// (`0 <= x < worldWidth`, `0 <= y < worldHeight` — half-open at the max
+  /// edges because the fitted field uses [Rect.contains]), or null when the
+  /// point lies in a
   /// letterbox margin (outside the simulated field). The router uses null to
   /// keep margin taps with the Flutter overlay rather than the backend.
   Offset? worldFromRegionLocal(Offset regionLocal) {
