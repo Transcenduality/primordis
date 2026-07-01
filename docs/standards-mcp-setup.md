@@ -37,15 +37,16 @@ verify with `/mcp` — `dgroup-standards` should show as connected.
 | File | Committed? | Purpose |
 | --- | --- | --- |
 | `.mcp.json` | ✅ yes | Declares the `dgroup-standards` HTTP server; key is `${DGROUP_STANDARDS_API_KEY}` (no secret) |
-| `.claude/settings.json` | ✅ yes | Enables the project server and allowlists read-only standards lookups |
+| `.claude/settings.json` | ✅ yes | Enables the project server and allowlists standards lookups + the task read/write and git/gh/flutter workflow tools used by the `mcp-autotask` / `land` skills |
 | `.claude/settings.local.json.example` | ✅ yes | Template to copy |
 | `.claude/settings.local.json` | 🚫 gitignored | Your real key, injected as `env.DGROUP_STANDARDS_API_KEY` and expanded into `.mcp.json` |
 
 The `env` block in `.claude/settings.local.json` is applied before MCP servers
 connect, so `${DGROUP_STANDARDS_API_KEY}` in `.mcp.json` resolves to your key.
 
-> Note: there is not yet a `PRIMORDIS` scope/project in the MCP server, so the
-> Primordis PRD/ADRs/tasks live as files under `docs/`. The server is used here
-> for read access to the org-wide Flutter standards and reusable ADRs. Adding a
-> `PRIMORDIS` scope (to host these docs in the server too) is a possible future
-> step.
+> Note: the Primordis scopes now exist in the MCP server — **`PRIMORDIS`** (product) and
+> **`PRIMORDIS_WEB`** (project). **Pending tasks are hosted in the server** under
+> `PRIMORDIS_WEB` (create/read via `create_task` / `list_tasks` / `get_task_context` with
+> `scope: "PRIMORDIS_WEB"`). The PRD, ADRs, research, and the completed early tasks
+> (001–005) remain as files under `docs/`. The server is also used for read access to the
+> org-wide Flutter standards and reusable ADRs.
