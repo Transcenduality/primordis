@@ -13,12 +13,19 @@ publish_to: 'none'
 # 0.5.0 adds web canvas compositing + pointer routing: the sibling WebGPU canvas
 # stacked behind a transparent Flutter glass-pane, DPR/resize sync, and the
 # explicit field/control pointer seam — PRIMORDIS-TASK-005.
-# 0.6.0 adds the live control chrome: the three Attraction K/Repulsion K/Drift
+# 0.6.0 adds the pure-Dart→WASM CPU fallback SimBackend (T4): deterministic
+# counting-sort binning, the platform-neutral CPU physics step + injectable SoA
+# buffer abstraction (reused by the native isolate tier), and the single-draw
+# points painter — PRIMORDIS-TASK-798 (orig. PRIMORDIS-TASK-008).
+# 0.7.0 adds the native macOS Dawn/wgpu-over-Metal SimBackend via dart:ffi
+# (minigpu): the WGSL pass adapter, the DawnGpu seam, MacosDawnBackend, and the
+# 24k/32-type spike harness (tool/spike) — PRIMORDIS_WEB-TASK-801 (orig. 011).
+# 0.8.0 adds the live control chrome: the three Attraction K/Repulsion K/Drift
 # sliders + reset/reseed + play/pause, their Riverpod providers, a per-frame
 # Ticker driving FrameLoop.tick, and prefers-reduced-motion / disableAnimations
-# start-paused wiring — PRIMORDIS-TASK-006 (MCP PRIMORDIS_WEB-TASK-796).
+# start-paused wiring — PRIMORDIS_WEB-TASK-796 (orig. PRIMORDIS-TASK-006).
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.6.0+6
+version: 0.8.0+8
 
 environment:
   sdk: ^3.11.4
@@ -56,6 +63,13 @@ dependencies:
   # dart:js_util are DISALLOWED anywhere in the tree (required for `flutter
   # build web --wasm`; see PRIMORDIS-ADR-007 / ORG Flutter standards).
   web: ^1.1.0
+
+  # macOS GPU compute — Dawn/wgpu-over-Metal via dart:ffi (PRIMORDIS-ADR-004 /
+  # PRIMORDIS-TASK-011). EXPERIMENTAL, solo-maintained; quarantined behind the
+  # SimBackend seam under lib/sim/. Dawn is compiled via Dart native assets
+  # (hook/build.dart, CMake) on first build. Pin: see pubspec.lock; the Dawn/Tint
+  # revision matters for atomics parity (PRIMORDIS-TASK-017).
+  minigpu: ^1.5.4
 
   # NOTE: Retrofit + Dio are house standards but intentionally OMITTED — Primordis
   # has no networking. Add them only if/when a network need appears.
