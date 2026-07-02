@@ -18,6 +18,13 @@ jobs:
         with:
           channel: stable
       - run: flutter --version
+      # minigpu (TASK-801) compiles Dawn via native-asset hooks, which needs
+      # X11/Vulkan dev headers and ~30+ min of CMake on a cold runner. This
+      # lightweight gate runs no GPU code (backend contract tests use a fake
+      # DawnGpu), so native assets are disabled here. The real native build
+      # jobs — with a cached .dart_tool/hooks_runner keyed on the minigpu
+      # version — land with the web/macOS pipelines (TASK-800 / TASK-806).
+      - run: flutter config --no-enable-native-assets
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
