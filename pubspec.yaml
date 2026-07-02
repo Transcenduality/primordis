@@ -24,8 +24,16 @@ publish_to: 'none'
 # sliders + reset/reseed + play/pause, their Riverpod providers, a per-frame
 # Ticker driving FrameLoop.tick, and prefers-reduced-motion / disableAnimations
 # start-paused wiring — PRIMORDIS_WEB-TASK-796 (orig. PRIMORDIS-TASK-006).
+# 0.10.0 adds the visual/statistical parity harness: the reusable pure-Dart
+# metric/band/fingerprint library (lib/sim/parity/**) that scores each backend
+# against the Primordis.py reference on aggregate statistics (never bit-exact),
+# the pluggable ParityBackend runner + CPU-tier anchor, the raw-snapshot
+# ingestion path for the WGSL kernel / Python reference, and the tool/parity
+# capture tooling — PRIMORDIS_WEB-TASK-799 (orig. 009). Merge-order assumption:
+# main is at 0.8.0 (TASK-796 landed); TASK-797 (in flight) takes 0.9.0, so this
+# takes 0.10.0 as the next free minor.
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.8.0+8
+version: 0.10.0+10
 
 environment:
   sdk: ^3.11.4

@@ -1,0 +1,98 @@
+{
+  "label": "reference",
+  "seed": 42,
+  "particleCount": 3000,
+  "typeCount": 32,
+  "attractionK": 32.0,
+  "repulsionK": 32.0,
+  "friction": 0.25,
+  "checkpoints": {
+    "early": {
+      "particleCount": 3000,
+      "clusterCount": 2,
+      "occupiedBinFraction": 1.0,
+      "occupancy": {
+        "count": 77,
+        "mean": 38.96103896103896,
+        "variance": 82.99848203744318,
+        "min": 23.0,
+        "max": 71.0
+      },
+      "nearestNeighbour": {
+        "count": 3000,
+        "mean": 8.075864258548547,
+        "variance": 17.556513641672424,
+        "min": 0.29885221871937806,
+        "max": 26.69997779210936
+      },
+      "segregationIndex": 0.3519438654599715,
+      "speed": {
+        "count": 3000,
+        "mean": 6.096358102442745,
+        "variance": 5.25827262503266,
+        "min": 0.07061636259196594,
+        "max": 11.265444499210236
+      },
+      "kineticEnergy": 21.211927369125984,
+      "maxEdgeBinExcess": 0.20584652862363018
+    },
+    "mid": {
+      "particleCount": 3000,
+      "clusterCount": 2,
+      "occupiedBinFraction": 1.0,
+      "occupancy": {
+        "count": 77,
+        "mean": 38.96103896103896,
+        "variance": 82.27120931017066,
+        "min": 23.0,
+        "max": 71.0
+      },
+      "nearestNeighbour": {
+        "count": 3000,
+        "mean": 8.20795280708706,
+        "variance": 16.404495752195984,
+        "min": 0.8732418593557718,
+        "max": 26.756649711936397
+      },
+      "segregationIndex": 0.3518325566194792,
+      "speed": {
+        "count": 3000,
+        "mean": 0.2389306651718598,
+        "variance": 0.019090456297593546,
+        "min": 0.001734944731087975,
+        "max": 0.9729584038317046
+      },
+      "kineticEnergy": 0.03808915952853046,
+      "maxEdgeBinExcess": 0.20584652862363018
+    },
+    "steady": {
+      "particleCount": 3000,
+      "clusterCount": 2,
+      "occupiedBinFraction": 1.0,
+      "occupancy": {
+        "count": 77,
+        "mean": 38.96103896103896,
+        "variance": 81.23224827120953,
+        "min": 23.0,
+        "max": 71.0
+      },
+      "nearestNeighbour": {
+        "count": 3000,
+        "mean": 8.51222605739875,
+        "variance": 14.157074819254632,
+        "min": 1.2061341356063333,
+        "max": 27.160427361930626
+      },
+      "segregationIndex": 0.3521831220913394,
+      "speed": {
+        "count": 3000,
+        "mean": 0.22338081504414586,
+        "variance": 0.015426798693883206,
+        "min": 0.0041692189190563715,
+        "max": 0.8580214670246953
+      },
+      "kineticEnergy": 0.03266289361183505,
+      "maxEdgeBinExcess": 0.15033475349969602
+    }
+  }
+}

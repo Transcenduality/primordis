@@ -1,2 +1,5 @@
 node_modules/
 package-lock.json
+
+# Parity: byte-identical seed export + kernel snapshot output (regenerated)
+seed.json
