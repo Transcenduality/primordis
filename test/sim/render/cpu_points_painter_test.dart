@@ -105,6 +105,28 @@ void main() {
       expect(painter.shouldRepaint(CpuPointsPainter(CpuFrame.empty)), isTrue);
     });
 
+    test('CpuFrame asserts pointsByType and colors are parallel', () {
+      expect(
+        () => CpuFrame(
+          pointsByType: <Float32List>[Float32List(2), Float32List(2)],
+          colors: const <ui.Color>[ui.Color(0xFFFFFFFF)], // only one colour
+          pointSize: 2,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    test('CpuFrame asserts a positive point size', () {
+      expect(
+        () => CpuFrame(
+          pointsByType: const <Float32List>[],
+          colors: const <ui.Color>[],
+          pointSize: 0,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
     test('particleTypeColors maps per-type RGB to opaque colours', () {
       final colors = particleTypeColors(const <ParticleType>[
         ParticleType(index: 0, r: 1, g: 0, b: 0),

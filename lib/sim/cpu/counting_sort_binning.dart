@@ -121,21 +121,11 @@ void countingSortBinning(SimBuffers buffers, GridGeometry grid) {
     running += binCounts[b];
   }
 
-  // Pass 3 — stable scatter using a per-bin moving cursor. We advance a local
-  // copy of the start offsets so binStarts stays as the neighbour-scan base.
-  // `cursor` reuses no extra frame allocation beyond a single Int32List the
-  // length of binCount; to honour the "no per-frame allocation" contract we
-  // instead walk with a running offset recomputed from binStarts + a temporary
-  // count already consumed. We keep a compact cursor by writing into
-  // sortedIndices at binStarts[bin] + (placed so far in that bin), tracked via
-  // binCounts being decremented back down is destructive; instead use the
-  // prefix offsets directly with an auxiliary consumed-count folded into the
-  // scatter loop below.
-  //
-  // To keep it strictly allocation-free AND non-destructive to binStarts, we
-  // temporarily repurpose binCounts as the moving cursor: after this loop
-  // binCounts is rebuilt to its true per-bin counts so callers (the neighbour
-  // scan) can rely on both binStarts and binCounts.
+  // Pass 3 — stable scatter. To stay allocation-free we temporarily repurpose
+  // binCounts as the per-bin moving cursor (seeded from binStarts), place each
+  // particle in original index order, then rebuild binCounts to its true
+  // per-bin counts. binStarts is left untouched as the neighbour-scan base, so
+  // after this pass callers can rely on both binStarts and binCounts.
   for (var b = 0; b < binCount; b++) {
     binCounts[b] = binStarts[b];
   }

@@ -47,6 +47,28 @@ void cpuSimStep(
   GridGeometry grid,
   double dt,
 ) {
+  // Fail fast if the buffers, params, and grid disagree on dimensions — a drift
+  // (e.g. a reduced-tier count change that didn't propagate to params) would
+  // otherwise read past matrix bounds or mis-wrap distances with no clear error.
+  assert(
+    buffers.typeCount == params.typeCount,
+    'buffer typeCount ${buffers.typeCount} != params ${params.typeCount}',
+  );
+  assert(
+    buffers.binCount == grid.binCount,
+    'buffer binCount ${buffers.binCount} != grid ${grid.binCount}',
+  );
+  assert(
+    params.forces.dimension == params.typeCount,
+    'forces matrix side ${params.forces.dimension} != typeCount '
+    '${params.typeCount}',
+  );
+  assert(
+    grid.worldWidth == params.worldWidth.toDouble() &&
+        grid.worldHeight == params.worldHeight.toDouble(),
+    'grid world size does not match params world size',
+  );
+
   countingSortBinning(buffers, grid);
 
   final n = buffers.particleCount;

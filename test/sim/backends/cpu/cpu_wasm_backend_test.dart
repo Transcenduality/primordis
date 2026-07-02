@@ -58,6 +58,29 @@ void main() {
       expect(backend.isDisposed, isTrue);
     });
 
+    test('is single-use: init after dispose throws', () async {
+      final backend = CpuWasmBackend();
+      await backend.init();
+      await backend.dispose();
+      expect(backend.init(), throwsStateError);
+    });
+
+    test('seed before init throws (lifecycle contract)', () {
+      final backend = CpuWasmBackend();
+      expect(
+        backend.seed(const SimSeed(particleCount: 100)),
+        throwsStateError,
+      );
+    });
+
+    test('dispose is idempotent (safe to call twice)', () async {
+      final backend = CpuWasmBackend();
+      await backend.init();
+      await backend.seed(const SimSeed(particleCount: 100));
+      await backend.dispose();
+      await expectLater(backend.dispose(), completes);
+    });
+
     test('actualParticleCount is 0 before seeding, honest after', () async {
       final backend = CpuWasmBackend();
       await backend.init();

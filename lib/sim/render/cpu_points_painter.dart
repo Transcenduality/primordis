@@ -30,7 +30,11 @@ class CpuFrame {
     required this.pointsByType,
     required this.colors,
     required this.pointSize,
-  });
+  })  : assert(
+          pointsByType.length == colors.length,
+          'pointsByType and colors must be parallel (same length)',
+        ),
+        assert(pointSize > 0, 'pointSize must be positive');
 
   /// One packed `x, y` buffer per particle type (may be empty for a type with
   /// no live particles this frame).
@@ -43,9 +47,12 @@ class CpuFrame {
   final double pointSize;
 
   /// An empty frame (nothing to draw) — the initial painter state.
-  static const CpuFrame empty = CpuFrame(
-    pointsByType: <Float32List>[],
-    colors: <ui.Color>[],
+  ///
+  /// Not `const` because the parallel-length/point-size asserts in the
+  /// constructor read `.length`, which is not a constant expression.
+  static final CpuFrame empty = CpuFrame(
+    pointsByType: const <Float32List>[],
+    colors: const <ui.Color>[],
     pointSize: PrimordisConfig.pointSize,
   );
 }

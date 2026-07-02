@@ -118,12 +118,21 @@ class CpuWasmBackend implements SimBackend {
 
   @override
   Future<void> init() async {
+    // The backend is single-use: dispose() permanently disposes the [frame]
+    // ValueNotifier, so re-initing a disposed backend would leave it looking
+    // alive while any present() crashes on the disposed notifier. Backend
+    // selection must construct a fresh instance rather than reviving one.
+    if (_disposed) {
+      throw StateError('CpuWasmBackend is single-use; init after dispose');
+    }
     _initialized = true;
-    _disposed = false;
   }
 
   @override
   Future<void> seed(SimSeed seed) async {
+    if (!_initialized || _disposed) {
+      throw StateError('seed() requires an initialized, non-disposed backend');
+    }
     // Honour the tier ceiling: never simulate more than this tier can sustain.
     final count = seed.particleCount > _maxParticles
         ? _maxParticles
@@ -224,6 +233,9 @@ class CpuWasmBackend implements SimBackend {
 
   @override
   Future<void> dispose() async {
+    // Idempotent: lifecycle/selection code may dispose defensively, and a
+    // ValueNotifier must not be disposed twice.
+    if (_disposed) return;
     _initialized = false;
     _disposed = true;
     _buffers = null;
