@@ -53,6 +53,13 @@ dependencies:
   # build web --wasm`; see PRIMORDIS-ADR-007 / ORG Flutter standards).
   web: ^1.1.0
 
+  # macOS GPU compute — Dawn/wgpu-over-Metal via dart:ffi (PRIMORDIS-ADR-004 /
+  # PRIMORDIS-TASK-011). EXPERIMENTAL, solo-maintained; quarantined behind the
+  # SimBackend seam under lib/sim/. Dawn is compiled via Dart native assets
+  # (hook/build.dart, CMake) on first build. Pin: see pubspec.lock; the Dawn/Tint
+  # revision matters for atomics parity (PRIMORDIS-TASK-017).
+  minigpu: ^1.5.4
+
   # NOTE: Retrofit + Dio are house standards but intentionally OMITTED — Primordis
   # has no networking. Add them only if/when a network need appears.
 
