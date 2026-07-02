@@ -76,6 +76,19 @@ class SimParamsController extends _$SimParamsController {
   void setFriction(double value) => state = state.copyWith(
         friction: value.clamp(SimSliders.frictionMin, SimSliders.frictionMax),
       );
+
+  /// Resets the three live sliders to their [SimSliders] defaults.
+  ///
+  /// This is a **uniform-only** reset ([PRIMORDIS-TASK-006]): the matrices,
+  /// particle count, and world/grid constants are left untouched, so a backend
+  /// only needs a `setParams` uniform write, not a reseed/storage-buffer
+  /// rewrite. Contrast with [SimSeedController.reseed], which regenerates the
+  /// matrices/colours/particles.
+  void resetToDefaults() => state = state.copyWith(
+        attractionK: SimSliders.attractionDefault,
+        repulsionK: SimSliders.repulsionDefault,
+        friction: SimSliders.frictionDefault,
+      );
 }
 
 /// The active [SimBackend] handle.
