@@ -6,7 +6,7 @@
 /// named constants here let the scaffold and config compile before that lands.
 abstract final class PrimordisConfig {
   /// App version. Keep in sync with `pubspec.yaml` `version:`.
-  static const String version = '0.5.0';
+  static const String version = '0.6.0';
 
   // --- Simulation constants (reference: Primordis.py) ---
 
@@ -29,4 +29,23 @@ abstract final class PrimordisConfig {
 
   /// Per-bin particle-index capacity (overflow is dropped, as in the reference).
   static const int maxBinParticles = 512;
+
+  // --- T4 (web CPU / Dart→WASM) tier policy (PRIMORDIS-ADR-006) ---
+
+  /// Default particle count for the single-thread web CPU fallback tier (T4).
+  ///
+  /// The T4 ceiling is single-thread WASM: ~3-4k particles hold ~60fps, while
+  /// the reference 24k lands at ~1-2.5fps (ADR-006 §1). This is the honest
+  /// default the [CpuWasmBackend] seeds at — it is deliberately NOT
+  /// [particleCount] (24k). Chosen mid-range of the ADR-006 3-4k band.
+  static const int cpuWasmDefaultParticleCount = 3500;
+
+  /// Hard upper bound for the T4 tier. A count slider may go up to this value
+  /// but no further (ADR-006 §3: a tier must not exceed its benchmarked
+  /// ceiling). Set to the top of the ADR-006 3-4k band.
+  static const int cpuWasmMaxParticleCount = 4000;
+
+  /// Rendered point size in logical pixels, matching the reference
+  /// `gl_PointSize = 2.0` (`Primordis.py`).
+  static const double pointSize = 2;
 }

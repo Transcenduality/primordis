@@ -13,8 +13,12 @@ publish_to: 'none'
 # 0.5.0 adds web canvas compositing + pointer routing: the sibling WebGPU canvas
 # stacked behind a transparent Flutter glass-pane, DPR/resize sync, and the
 # explicit field/control pointer seam — PRIMORDIS-TASK-005.
+# 0.6.0 adds the pure-Dart→WASM CPU fallback SimBackend (T4): deterministic
+# counting-sort binning, the platform-neutral CPU physics step + injectable SoA
+# buffer abstraction (reused by the native isolate tier), and the single-draw
+# points painter — PRIMORDIS-TASK-798 (orig. PRIMORDIS-TASK-008).
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.5.0+5
+version: 0.6.0+6
 
 environment:
   sdk: ^3.11.4
