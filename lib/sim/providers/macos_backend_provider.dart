@@ -12,8 +12,10 @@ part 'macos_backend_provider.g.dart';
 ///
 /// This is the seam the cross-platform backend selector
 /// ([PRIMORDIS-TASK-805]) consumes: on macOS it resolves to an un-initialized
-/// [MacosDawnBackend]; anywhere else it is null and pulls in no FFI/minigpu
-/// code ([PRIMORDIS-ADR-001] / [PRIMORDIS-ADR-004]). If `init()` later throws
+/// [MacosDawnBackend]; anywhere else it is null. On **web** the conditional
+/// import compiles the stub, so no FFI/minigpu code enters the bundle; on
+/// other `dart:io` platforms the io implementation compiles but returns null
+/// at runtime ([PRIMORDIS-ADR-001] / [PRIMORDIS-ADR-004]). If `init()` throws
 /// (Dawn/device failure) the selector falls back to the Metal/MSL plugin tier
 /// ([PRIMORDIS-TASK-803], currently deferred) or the native CPU tier
 /// ([PRIMORDIS-TASK-804]).

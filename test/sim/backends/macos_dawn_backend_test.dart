@@ -129,6 +129,26 @@ void main() {
     });
   });
 
+    test('re-allocates the matrices buffer when typeCount changes', () async {
+      await backend.init();
+      await backend.seed(seed);
+      backend.setParams(paramsFor(seed));
+      await pumpQueue();
+      const n2 = PrimordisConfig.typeCount * PrimordisConfig.typeCount;
+      final first = gpu.buffers.firstWhere((b) => b.byteSize == 3 * n2 * 4);
+
+      const smallSeed = SimSeed(particleCount: 100, typeCount: 8);
+      backend.setParams(
+        paramsFor(smallSeed).copyWith(typeCount: smallSeed.typeCount),
+      );
+      await pumpQueue();
+
+      expect(first.isDestroyed, isTrue);
+      final second = gpu.buffers.firstWhere((b) => b.byteSize == 3 * 8 * 8 * 4);
+      expect(second.lastF32, hasLength(3 * 8 * 8));
+      expect(backend.deviceError, isNull);
+    });
+
   group('step', () {
     test('writes dt into the uniform then dispatches clear/scatter/interact',
         () async {
@@ -189,6 +209,28 @@ void main() {
       await pumpQueue();
       expect(gpu.dispatches, hasLength(3)); // one frame, not two
     });
+  });
+
+  test('dispose waits for an in-flight frame before destroying resources',
+      () async {
+    await backend.init();
+    await backend.seed(seed);
+    backend.setParams(paramsFor(seed));
+    await pumpQueue();
+
+    gpu.holdDispatches = true;
+    backend.step(1 / 60);
+    await pumpQueue();
+    final disposing = backend.dispose();
+    await pumpQueue();
+    // The frame chain is still held: nothing may be torn down yet.
+    expect(gpu.buffers.any((b) => b.isDestroyed), isFalse);
+    expect(gpu.destroyed, isFalse);
+
+    gpu.releaseHeldDispatches();
+    await disposing;
+    expect(gpu.buffers.every((b) => b.isDestroyed), isTrue);
+    expect(gpu.destroyed, isTrue);
   });
 
   test('dispose destroys all passes, buffers, and the device', () async {

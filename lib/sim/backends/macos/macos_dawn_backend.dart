@@ -62,6 +62,7 @@ final class MacosDawnBackend implements SimBackend {
   bool _initialized = false;
   bool _disposed = false;
   bool _frameInFlight = false;
+  Future<void>? _frameFuture;
   Object? _deviceError;
 
   @override
@@ -130,9 +131,19 @@ final class MacosDawnBackend implements SimBackend {
       flattenMatrix(params.minDistances),
       flattenMatrix(params.radii),
     );
-    final matrices = _matrices ??= _gpu.createF32Buffer(merged.lengthInBytes);
+    // Re-allocate if typeCount (and thus the merged byte length) changed —
+    // an exact-size buffer is required (the DawnGpu seam rejects mismatches).
+    var matrices = _matrices;
+    if (matrices != null && matrices.byteSize != merged.lengthInBytes) {
+      matrices.destroy();
+      matrices = null;
+    }
+    matrices ??= _gpu.createF32Buffer(merged.lengthInBytes);
+    _matrices = matrices;
     _bindAll();
-    unawaited(matrices.writeF32(merged));
+    unawaited(
+      matrices.writeF32(merged).catchError((Object e) => _deviceError = e),
+    );
   }
 
   @override
@@ -152,7 +163,7 @@ final class MacosDawnBackend implements SimBackend {
     final uniform = packUniforms(params, dt);
     final binGroups = computeWorkgroups(PrimordisConfig.binCount);
     final particleGroups = computeWorkgroups(_particleCount);
-    unawaited(() async {
+    _frameFuture = () async {
       try {
         await _paramsBuf!.writeU32(uniform.buffer.asUint32List());
         await _clearBins!.dispatch(binGroups);
@@ -165,7 +176,7 @@ final class MacosDawnBackend implements SimBackend {
       } finally {
         _frameInFlight = false;
       }
-    }());
+    }();
   }
 
   @override
@@ -178,6 +189,17 @@ final class MacosDawnBackend implements SimBackend {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
+    // Let any in-flight frame chain drain before tearing down its resources —
+    // destroying a buffer a dispatch is still using is a native use-after-
+    // destroy (and native errors abort the process; see dawn_gpu.dart).
+    final inFlight = _frameFuture;
+    if (inFlight != null) {
+      try {
+        await inFlight;
+      } catch (_) {
+        // Frame errors are already parked in _deviceError.
+      }
+    }
     for (final pass in [_clearBins, _scatterBins, _interact]) {
       pass?.destroy();
     }
