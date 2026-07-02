@@ -79,6 +79,26 @@ void main() {
       final after = c.read(simParamsControllerProvider).forces;
       expect(before, isNot(equals(after)));
     });
+
+    test('resetToDefaults restores slider defaults without touching matrices',
+        () {
+      final c = _container();
+      final notifier = c.read(simParamsControllerProvider.notifier);
+      final matricesBefore = c.read(simParamsControllerProvider).forces;
+
+      notifier.setAttractionK(99);
+      notifier.setRepulsionK(1);
+      notifier.setFriction(0.9);
+      notifier.resetToDefaults();
+
+      final params = c.read(simParamsControllerProvider);
+      expect(params.attractionK, SimSliders.attractionDefault);
+      expect(params.repulsionK, SimSliders.repulsionDefault);
+      expect(params.friction, SimSliders.frictionDefault);
+      // Reset is uniform-only: the matrices are untouched (contrast with
+      // reseed, which regenerates them).
+      expect(params.forces, equals(matricesBefore));
+    });
   });
 
   group('simBackend', () {

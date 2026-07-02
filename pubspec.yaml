@@ -20,8 +20,12 @@ publish_to: 'none'
 # 0.7.0 adds the native macOS Dawn/wgpu-over-Metal SimBackend via dart:ffi
 # (minigpu): the WGSL pass adapter, the DawnGpu seam, MacosDawnBackend, and the
 # 24k/32-type spike harness (tool/spike) — PRIMORDIS_WEB-TASK-801 (orig. 011).
+# 0.8.0 adds the live control chrome: the three Attraction K/Repulsion K/Drift
+# sliders + reset/reseed + play/pause, their Riverpod providers, a per-frame
+# Ticker driving FrameLoop.tick, and prefers-reduced-motion / disableAnimations
+# start-paused wiring — PRIMORDIS_WEB-TASK-796 (orig. PRIMORDIS-TASK-006).
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.7.0+7
+version: 0.8.0+8
 
 environment:
   sdk: ^3.11.4
