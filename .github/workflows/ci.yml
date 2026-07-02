@@ -11,20 +11,24 @@ on:
 
 jobs:
   analyze-test:
-    runs-on: ubuntu-latest
+    # macOS runner since TASK-801: minigpu's native-asset hook MUST run
+    # (`flutter test` refuses to start when a dependency requires native
+    # assets and the feature is off), and the hook compiles Dawn. On macOS
+    # that is Dawn-over-Metal with no X11/Vulkan system deps — the same build
+    # the macOS target ships — and macOS runners are free on public repos.
+    # The hook output is cached below: only a minigpu version bump pays the
+    # cold Dawn compile again.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+      - uses: actions/cache@v4
+        with:
+          path: .dart_tool/hooks_runner
+          key: hooks-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
       - run: flutter --version
-      # minigpu (TASK-801) compiles Dawn via native-asset hooks, which needs
-      # X11/Vulkan dev headers and ~30+ min of CMake on a cold runner. This
-      # lightweight gate runs no GPU code (backend contract tests use a fake
-      # DawnGpu), so native assets are disabled here. The real native build
-      # jobs — with a cached .dart_tool/hooks_runner keyed on the minigpu
-      # version — land with the web/macOS pipelines (TASK-800 / TASK-806).
-      - run: flutter config --no-enable-native-assets
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
