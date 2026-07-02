@@ -10,12 +10,14 @@ import 'package:flutter/material.dart';
 /// so there is no `setState` anywhere in the control path.
 ///
 /// Accessibility (house standard — accessibility is a top-level goal, not
-/// polish): the [tooltip] wraps the whole control via [Tooltip], and an
-/// explicit [Semantics] node exposes [label] plus a formatted [value] so
-/// screen readers announce both the control's purpose and its current
-/// reading, independent of the tooltip (which is not screen-reader-visible on
-/// every platform). The underlying [Slider] is natively keyboard-operable
-/// (arrow keys) once focused.
+/// polish): the [tooltip] wraps the whole control via [Tooltip]; the
+/// decorative label/value texts are excluded from the semantics tree, and a
+/// [Semantics] label node wraps the [Slider] (the platform-conventional
+/// labelled-control structure: a labelling parent node whose child is the
+/// slider's own node). Crucially the [Slider]'s **own** semantics node is
+/// never excluded, so its native increase/decrease actions, value, and
+/// keyboard operability (arrow keys once focused) all remain available to
+/// assistive tech.
 class LabeledSlider extends StatelessWidget {
   const LabeledSlider({
     super.key,
@@ -53,37 +55,42 @@ class LabeledSlider extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final formatted = (valueFormatter ?? _defaultFormat)(value);
-    final semanticLabel = '$label: $formatted';
 
     return Tooltip(
       message: tooltip,
-      child: Semantics(
-        label: label,
-        value: formatted,
-        slider: true,
-        child: ExcludeSemantics(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(label, style: theme.textTheme.labelLarge),
-                  Text(formatted, style: theme.textTheme.labelMedium),
-                ],
-              ),
-              Slider(
-                value: value.clamp(min, max),
-                min: min,
-                max: max,
-                label: formatted,
-                semanticFormatterCallback: (_) => semanticLabel,
-                onChanged: onChanged,
-              ),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // The visual label/value row is decorative for assistive tech: the
+          // same information is exposed on the slider's semantics node below,
+          // so exclude ONLY this row — never the Slider, whose built-in
+          // increase/decrease actions are what make the control adjustable
+          // for screen-reader users.
+          ExcludeSemantics(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(label, style: theme.textTheme.labelLarge),
+                Text(formatted, style: theme.textTheme.labelMedium),
+              ],
+            ),
           ),
-        ),
+          // The labelling node wraps — never replaces — the Slider's own
+          // semantics node, so the control keeps its native increase/decrease
+          // actions and stays adjustable for screen-reader users.
+          Semantics(
+            label: label,
+            child: Slider(
+              value: value.clamp(min, max),
+              min: min,
+              max: max,
+              label: formatted,
+              semanticFormatterCallback: (_) => formatted,
+              onChanged: onChanged,
+            ),
+          ),
+        ],
       ),
     );
   }

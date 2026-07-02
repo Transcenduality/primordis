@@ -67,6 +67,32 @@ void main() {
       expect(backend.lastSeed, newSeed);
     });
 
+    test(
+        'mutating the seed controller (the ControlPanel reseed path) never '
+        're-runs build()/init()', () async {
+      final backend = FakeSimBackend();
+      final container = _containerWithBackend(backend);
+      await container.read(simRunnerControllerProvider.future);
+      expect(backend.initCount, 1);
+
+      // Mirror ControlPanel._reseed: mutate the seed provider, then call the
+      // runner's reseed action with the new seed.
+      container.read(simSeedControllerProvider.notifier).reseed(77);
+      final seed = container.read(simSeedControllerProvider);
+      await container.read(simRunnerControllerProvider.notifier).reseed(seed);
+      // Let any (incorrect) provider rebuild settle before asserting.
+      await container.read(simRunnerControllerProvider.future);
+
+      expect(
+        backend.initCount,
+        1,
+        reason: 'init() must run exactly once per backend lifecycle — '
+            'a reseed is a seed()-only operation',
+      );
+      expect(backend.seedCount, 2);
+      expect(backend.lastSeed, seed);
+    });
+
     test('exposes AsyncData once bring-up completes', () async {
       final backend = FakeSimBackend();
       final container = _containerWithBackend(backend);

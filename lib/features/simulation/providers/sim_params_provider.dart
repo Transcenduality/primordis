@@ -22,24 +22,28 @@ part 'sim_params_provider.g.dart';
 /// — it only calls through the [SimBackend] interface, never
 /// `dart:js_interop`/`dart:ffi` directly ([PRIMORDIS-ADR-001]).
 
-/// Whether the app should start paused because the platform reports a
-/// reduced-motion preference.
+/// Whether the platform reports a reduced-motion preference.
 ///
 /// This is a **plain settable flag**, not a `MediaQuery` read: `MediaQuery` is
 /// only available from a `BuildContext`, so the widget layer (the runner host,
 /// [PRIMORDIS-TASK-006]) observes `MediaQuery.disableAnimationsOf(context)` on
-/// first build and calls [ReducedMotionController.set] once, which in turn
-/// pauses [RunStateController] if true. Keeping the provider free of
-/// `BuildContext` keeps it unit-testable without pumping a widget tree.
+/// first build and records it here via [ReducedMotionController.set]. This
+/// controller only **stores** the flag; the start-paused behaviour required by
+/// [PRIMORDIS-ADR-006] is applied by that same widget-layer sync (it calls
+/// `RunStateController.pause()` alongside `set(true)` in a post-frame
+/// callback). Keeping the provider free of `BuildContext` — and free of
+/// cross-provider side effects — keeps it unit-testable without pumping a
+/// widget tree.
 @Riverpod(keepAlive: true)
 class ReducedMotionController extends _$ReducedMotionController {
   @override
   bool build() => false;
 
-  /// Records the platform's reduced-motion preference. Setting `true` for the
-  /// first time also pauses the run state — the reduced-motion affordance
-  /// required by [PRIMORDIS-ADR-006] — but never auto-resumes on `false`
-  /// (resuming is always an explicit play action).
+  /// Records the platform's reduced-motion preference. This only updates the
+  /// flag — pausing the run state is the caller's job (the widget-layer sync
+  /// pauses [RunStateController] alongside `set(true)`; see
+  /// `SimulationView._syncReducedMotion`). Nothing auto-resumes on `false`:
+  /// resuming is always an explicit play action.
   void set(bool reducedMotion) {
     if (state == reducedMotion) return;
     state = reducedMotion;
@@ -64,7 +68,12 @@ class SimRunnerController extends _$SimRunnerController {
   // ignore: avoid_futureor_void
   FutureOr<void> build() async {
     final backend = ref.watch(simBackendProvider);
-    final seed = ref.watch(simSeedControllerProvider);
+    // Deliberately `read`, not `watch`: `init()` must run exactly once per
+    // backend lifecycle. Watching the seed here would re-run this build —
+    // and re-`init()` the backend — on every reseed, when a reseed only
+    // needs `seed()` (see [reseed]). The current seed is read once for the
+    // initial bring-up; later seed changes flow through [reseed] only.
+    final seed = ref.read(simSeedControllerProvider);
     await backend.init();
     await backend.seed(seed);
   }
