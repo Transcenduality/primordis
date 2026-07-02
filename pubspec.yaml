@@ -17,8 +17,11 @@ publish_to: 'none'
 # counting-sort binning, the platform-neutral CPU physics step + injectable SoA
 # buffer abstraction (reused by the native isolate tier), and the single-draw
 # points painter — PRIMORDIS-TASK-798 (orig. PRIMORDIS-TASK-008).
+# 0.7.0 adds the native macOS Dawn/wgpu-over-Metal SimBackend via dart:ffi
+# (minigpu): the WGSL pass adapter, the DawnGpu seam, MacosDawnBackend, and the
+# 24k/32-type spike harness (tool/spike) — PRIMORDIS_WEB-TASK-801 (orig. 011).
 # Keep this in sync with PrimordisConfig.version. Semver per DGROUP-ADR-005.
-version: 0.6.0+6
+version: 0.7.0+7
 
 environment:
   sdk: ^3.11.4
